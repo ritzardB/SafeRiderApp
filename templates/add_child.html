@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Children Page</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="main-container">
+        <div class="sub-container-1">
+            <img src="/static/saferider.png" width="250" height="160" alt="SafeRider Logo">
+            <h1>Add Children</h1>
+        </div>
+        <div>
+             <h2>Add Child/Student</h2>
+                <form method="POST">
+                <table>
+                    <tr>
+                        <td><label for="student_name">Student Name:</label></td>
+                        <td><input type="text" name="student_name" required></td>
+                    </tr>
+                    <tr>
+                        <td><label for="parent_name">Grade:</label></td>
+                        <td><input type="text" name="grade" required></td>
+                    </tr>
+                    <tr>
+                        <td><label for="section">Section:</label></td>
+                        <td><input type="text" name="section" required></td>
+                    </tr>
+                    <tr>
+                        <td><label for="school">School:</label></td>
+                        <td><input type="text" name="school" required></td>
+                    </tr>
+
+                </table>
+                <p>Note: The assigned driver will be notified of the new child/student.</p>
+
+                <button type="submit">Add Child</button>
+                </form>
+        </div>
+        <br>
+        <div class="sub-container-below">
+            <a href="/parent_profile" class="back-button">Back to Profile</a>
+        </div>
+    </div>
+    
+</body>
+</html>

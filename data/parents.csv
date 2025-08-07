@@ -1,0 +1,2 @@
+parent_id,parent_username,parent_password,parent_name,home_address,email,phone,student_name,school,assigned_driver_id,photo_url
+d02a7730-0772-4cc3-98aa-b90b241ba144,parent_test,scrypt:32768:8:1$SaJjSMV8FDaZ51AY$5fe7123ed55d5ca6231d9b48e43c2679b69e21316c61f9b38f01609adc633c05887b6f8abd37f67e8c13f4879eab757fe295c7902b27094ee24632568f1e3752,Richard Balabarcon,P3 Block 38 Lot 33 NHA Bangkal,rbalabarcon@gmail.com,971506415751,Julian Chris,Richmindale Abu Dhabi,29f3337a-a33f-41b0-945a-ee9e41616a8e,/static/uploads/default_parent.png

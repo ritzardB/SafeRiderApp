@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Students to Driver</title>
+    <link rel="stylesheet" href="/static/style.css">
+
+
+</head>
+<body>
+    <div class="main-container">
+        <div class="sub-container-1">
+            <img src="/static/saferider.svg" width="250" height="160" alt="SafeRider App Logo">   
+        </div>
+        <div class="sub-container">
+            <h3>Assigned Students</h3>
+            {% if students %}
+            <table>
+                <tr>
+                    <th>Name</th><th>Grade</th><th>Section</th><th>School</th>
+                </tr>
+            {% for row in students %}
+            <tr>
+                <td>{{ row.name }}</td>
+                <td>{{ row.grade }}</td>
+                <td>{{ row.section }}</td>
+                <td>{{ row.school }}</td>
+            </tr>
+            {% endfor %}
+            </table>
+            {% else %}
+            <p>No students assigned.</p>
+            {% endif %}
+
+        <label for="students">Assign Students (comma-separated):</label><br>
+        <input type="text" name="students" placeholder="e.g. Ali,Emma" required><br><br>
+
+        <button type="submit">Assign</button>
+        </form>
+
+        <p><a href="/">Back to Home</a></p>
+        </div>
+    </div>
+        
+</body>
+</html>

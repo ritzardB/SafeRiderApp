@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Children Page</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="main-container">
+        <div class="sub-container-1">
+            <img src="/static/saferider.png" width="250" height="160" alt="SafeRider Logo">
+            <h1>View Children</h1>
+        </div>
+        <div>
+            <h2>Your Children/Students</h2>
+                <ul>
+                {% for child in children %}
+                    <li>
+                        <a href="{{ url_for('student_profile', student_id=child['student_id']) }}">
+                            {{ child['student_name'] }} - {{ child['school'] }}
+                        </a>
+                    </li>
+                {% endfor %}
+                </ul>
+                {% if not children %}
+                    <p>No children/students found.</p>
+                {% endif %}
+
+        </div>
+
+
+        <div class="sub-container-below">
+            <a href="/parent_profile" class="back-button">Back to Profile</a>
+        </div>
+    </div>
+    
+</body>
+</html>

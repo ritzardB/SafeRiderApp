@@ -1,0 +1,32 @@
+<!-- base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}SafeRider App{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- Icons -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <meta name="theme-color" content="#2E86C1">
+
+    <!-- Meta for iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+</head>
+<body>
+    
+    {% block content %}{% endblock %}
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('{{ url_for("static", filename="service-worker.js") }}')
+            .then(reg => console.log("Service Worker registered ✔️"))
+            .catch(err => console.error("Service Worker registration failed ❌", err));
+        }
+    </script>
+</body>
+</html>

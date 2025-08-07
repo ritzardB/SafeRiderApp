@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Profile</title>
+    <link rel="stylesheet" href="/static/style.css">
+    
+</head>
+<body>
+
+    <div class="container">
+            <div class="sub-container-1">
+            <img src="/static/saferider.svg" width="250" height="160" alt="SafeRider App Logo">
+            </div>
+        <h1>Driver Profile</h1>
+
+        <!-- Profile Photo -->
+        <div class="photo-holder">
+            <img src="{{ driver.photo_url or 'https://lottie.host/b90b26ac-aad0-4d57-8ea1-411e5e821abe/rqqTKs2hil.lottie' }}" alt="Driver Photo">
+        </div> 
+
+            <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_photo') }}">
+            <input type="file" name="photo">
+            <button type="submit">Upload Profile Photo</button>
+            </form>
+
+        <hr>
+
+        <!-- Driver Info -->
+        <h2>My Profile</h2>
+        <form method="POST" action="/save-profile">
+            <table>
+                <tr>
+                    <td><label for="name">Name:</label></td>
+                    <td><input type="text" id="name" name="name" value="{{ driver.name }}" required></td>
+                </tr>
+                <tr>
+                    <td><label for="email">Email:</label></td>
+                    <td><input type="email" id="email" name="email" value="{{ driver.email }}" required></td>
+                </tr>
+                <!-- <tr>
+                    <td><label for="confirm_email">Confirm Email:</label></td>
+                    <td><input type="email" id="confirm_email" name="confirm_email" value="{{ driver.email }}" required></td>
+                </tr>
+                <tr>
+                    <td><label for="password">Password:</label></td>
+                    <td><input type="password" id="password" name="password" required></td>
+                </tr>
+                <tr>
+                    <td><label for="confirm_password">Confirm Password:</label></td>
+                    <td><input type="password" id="confirm_password" name="confirm_password" required></td>
+                </tr>
+                <tr> -->
+                    <td><label for="phone">Phone:</label></td>
+                    <td><input type="text" id="phone" name="phone" value="{{ driver.phone }}" required></td>
+                </tr>
+                <tr>
+                    <td><label for="vehicle">Vehicle:</label></td>
+                    <td><input type="text" id="vehicle" name="vehicle" value="{{ driver.vehicle }}" required></td>
+                </tr>
+                <tr>
+                    <td><label for="license_plate">License Plate:</label></td>
+                    <td><input type="text" id="license_plate" name="license_plate" value="{{ driver.license_plate }}" required></td>
+                </tr>
+                <tr>
+                    <td><label for="assigned_students">Assign Students:</label></td>
+                    <td>
+                        <select id="assigned_students" name="assigned_students" multiple style="width: 300px">
+                            {% for student in students %}
+                                <option value="{{ student }}" {% if student in assigned_students %}selected{% endif %}>{{ students }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+            </table>
+            <div style="text-align:center; margin-top: 20px;">
+                <button type="submit">Save Profile</button>
+            </div>
+            <div style="text-align:center; margin-top: 20px;">
+                <a href="/dashboard">Back to Dashboard</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

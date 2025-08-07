@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>View Rides History</title>
+</head>
+<body>
+    <div class="main-container">
+        <divc class="sub-container-1">
+            <img src="/static/saferider.png" width="250" height="160" alt="SafeRider Logo">
+            <h1>View Rides History</h1>
+        </div>
+        <div class="sub-container">
+            <h2>Ride History</h2>
+            <table>
+            <thead>
+                <tr>
+                <th>Timestamp</th>
+                <th>Student</th>
+                <th>Location</th>
+                <th>Driver</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ride in rides %}
+                <tr>
+                <td>{{ ride.timestamp }}</td>
+                <td>{{ ride.student }}</td>
+                <td>{{ ride.location }}</td>
+                <td>{{ ride.driver }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+        <br>
+        <div class="sub-container-below">
+            <a href="/parent_profile" class="back-button">Back to Profile</a>
+        </div>
+    </div>
+    
+</body>
+</html>

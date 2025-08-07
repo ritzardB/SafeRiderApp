@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Registration</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="main-container">
+    <div>
+        <img src="/static/saferider.svg" width="250" height="160" alt="SafeRider App Logo">  
+    </div>
+    <div class="sub-container">
+      <h1>Parent Registration</h1>
+      <form method="POST">
+        <!-- Parent Information -->
+
+<h3>Login Credentials:</h3>
+<table>
+  <tr>
+    <td align="right">UserName:</td>
+    <td><input type="text" name="parent_username" placeholder="Enter your username" required></td>
+  </tr>
+  <tr>
+    <td align="right">Password:</td>
+    <td><input type="password" name="parent_password" placeholder="Enter your password" required></td>
+  </tr>
+  <tr>
+    <td align="right">Confirm Password:</td>
+    <td><input type="password" name="confirm_password" placeholder="Re-enter your password" required></td>
+</table>
+<h3>Parent Information:</h3>
+<table>
+  <tr>
+    <td align="right">Full Name:</td>
+    <td><input type="text" name="parent_name" required></td>
+  </tr>
+  <tr>
+    <td align="right">Home Address:</td>
+    <td><input type="text" name="home_address" required></td>
+  <tr>
+    <td align="right">Email Address:</td>
+    <td><input type="email" name="email" required></td>
+  </tr>
+  <tr>
+    <td align="right">Mobile Phone:</td>
+    <td><input type="text" name="phone" required></td>
+  </tr>
+</table>
+
+<!-- Student Information -->
+<h3>Student Information:</h3>
+<table>
+  <tr>
+    <td align="right">Student Name:</td>
+    <td><input type="text" name="student_name" required></td>
+  </tr>
+  <tr>
+    <td align="right">Grade:</td>
+    <td><input type="text" name="grade" required></td>
+  </tr>
+  <tr>
+    <td align="right">Section/Group:</td>
+    <td><input type="text" name="section" required></td>
+  </tr>
+  <tr>
+    <td align="right">School Name:</td>
+    <td><input type="text" name="school" required></td>
+  </tr>
+</table>
+
+<!-- Driver Information -->
+<h3>Driver Information:</h3>
+<table>
+  <tr>
+    <td align="right">Driver's name or nickname:</td>
+    <td><input type="text" name="driver_alias" placeholder="Juan Dela Cruz or Juan" required></td>
+  </tr>
+</table>
+
+<br>
+<button type="submit">Register</button>
+<p><a href="/">Back to Login</a></p>
+
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <p style="color:green">{{ messages[0] }}</p>
+        {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+</body>
+</html>

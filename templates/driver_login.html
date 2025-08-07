@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Login</title>
+    <link rel="stylesheet" href="/static/style.css"/>
+
+</head>
+<body>
+    <div class="main-container">
+        <div class="sub-container-1">
+            <img src="/static/saferider.png" width="250" height="160" alt="SafeRider Logo"> 
+        </div>
+        
+        <div class="sub-container">
+
+            <h1 class="headliner">Driver Login</h1>
+
+            <form method="POST">
+                <table>
+                    <tr>
+                        <td><label for="user_name">User Name:</label></td>
+                        <td><input type="text" name="user_name" required></td>
+                    </tr>
+                    <tr>
+                        <td><label for="password">Password:</label></td>
+                        <td><input type="password" name="password" required></td>
+                    </tr>
+                </table>
+                <br>
+                <a href="{{ url_for('driver_reset_password') }}">Forgot password?</a>
+                <br><br>
+            
+                <button type="submit">Login</button>
+            </form>
+            <br>
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <p style="color:red">{{ messages[0] }}</p>
+            {% endif %}
+            {% endwith %}
+
+            <p>Not a registered Driver?</p>
+            <p>
+
+                Sign up here → 
+                <a href="{{ url_for('driver_register') }}">Register here</a>
+            </p>
+        </div>
+        
+    </div>
+    
+</body>
+</html>
+

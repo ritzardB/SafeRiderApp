@@ -1,0 +1,21 @@
+{
+  "name": "SafeRiderApp",
+  "short_name": "SafeRider",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2E86C1",
+  "icons": [
+    {
+      "src": "/static/icons/icon-196.png",
+      "type": "image/png",
+      "sizes": "196x196"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
+   

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#2E86C1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeRider App main dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/static/service-worker.js")
+            .then(() => console.log("Service Worker registered"))
+            .catch(err => console.error("Service Worker registration failed:", err));
+        }
+    </script>
+    
+</head>
+<body>
+    <div class="main-container">
+        <div>
+            <img src="/static/saferider.svg" width="250" height="160" alt="SafeRider App Logo">
+        </div>
+        <div class="sub-container">
+            <h1>Welcome to Safe<span style="color: rgb(255, 85, 0);">Rider</span> App!</h1>
+            
+            <div>
+                <a class="menu-btn" href="{{ url_for('admin_login') }}">🧑🏻‍🏫 Admin Login</a>
+                <a class="menu-btn" href="{{ url_for('parent_login') }}">🧑‍🧑‍🧒 Parent Login</a>
+                <a class="menu-btn" href="{{ url_for('driver_login') }}">👨‍✈️ Login Driver</a>
+
+            </div>
+        </div>
+        
+    </div>
+
+            
+    <div class="footer">
+        <p align="center">
+            <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js" type="module"></script>
+            <dotlottie-wc src="https://lottie.host/63fb7ec6-4963-4a0e-853a-be9f4c6572a5/7njvjN1VfS.lottie" 
+                        style="width: 250px; height: 250px;" 
+                        speed="1" autoplay loop></dotlottie-wc>     
+        </p>
+        <div>
+            <footer>
+                <p>&copy; 2025 SafeRider App. All rights reserved.</p>
+            </footer>
+        </div>
+    </div>
+</body>
+</html>

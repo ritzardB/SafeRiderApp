@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="main-container">
+
+        <!-- Logo -->
+        <header class="sub-container-1">
+            <img src="/static/saferider.svg" width="250" height="160" alt="SafeRider App Logo">
+        </header>
+
+        <!-- Welcome Section -->
+        <section class="sub-container">
+            <h1>My Dashboard</h1>
+            <h2 class="headliner">Welcome, {{ driver.name }}</h2>
+        </section>
+
+        <!-- Driver Info -->
+        <section class="sub-container">
+            <h3>Driver Info</h3>
+            <p><strong>Email:</strong> {{ driver.email }}</p>
+            <p><strong>Phone:</strong> {{ driver.phone }}</p>
+
+            <div class="button-group">
+                <a class="btn" href="{{ url_for('driver_profile') }}">📜 View Profile</a>
+                <a class="btn" href="{{ url_for('notify_parent') }}">📨 Notify Parent</a>
+            </div>
+        </section>
+
+        <!-- Assigned Students -->
+        <section class="sub-container-2">
+            <h3>Assigned Students</h3>
+            {% if assigned_students %}
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Grade</th>
+                            <th>Section</th>
+                            <th>School</th>
+                            <th>Parent Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in assigned_students %}
+                        <tr>
+                            <td>{{ s.name }}</td>
+                            <td>{{ s.grade }}</td>
+                            <td>{{ s.section }}</td>
+                            <td>{{ s.school }}</td>
+                            <td>{{ s.parent_email }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No students assigned.</p>
+            {% endif %}
+        </section>
+
+        <!-- History Link -->
+        <section class="sub-container">
+            <h3>Pick-Up / Drop-Off History</h3>
+            <p>
+                <a href="/history">View Pickup and Drop-Off history here...</a>
+            </p>
+        </section>
+
+        <!-- Logout -->
+        <footer class="sub-container-below">
+            <a class="btn-logout" href="{{ url_for('logout') }}">🚪 Logout</a>
+        </footer>
+
+    </div>
+</body>
+</html>

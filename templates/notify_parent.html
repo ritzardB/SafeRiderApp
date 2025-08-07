@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notify Parent</title>
+    <link rel="stylesheet" href="/static/style.css">
+
+</head>
+</head>
+<body>
+    <div class="main-container">
+        <div class="sub-container-1">
+             <img src="/static/saferider.svg" width="250" height="160" alt="SafeRider App Logo">   
+        </div>
+        <div class="sub-container">
+            <h1>Notification</h1>
+            <h2>Send Notification to Parent</h2>
+
+        <form method="POST">
+            <label for="student">Student:</label>
+            <select name="student" required>
+                {% for s in students %}
+                <option value="{{ s.name }}">{{ s.name }} - Grade {{ s.grade }} ({{ s.school }})</option>
+                {% endfor %}
+            </select><br><br>
+
+            <label for="location">Current Location:</label>
+            <input type="text" name="location" required><br><br>
+
+            <input type="submit" value="Send Notification">
+        </form>
+
+        <hr>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div style="background-color: #d4edda; color: #155724; padding: 10px; border: 1px solid #c3e6cb; margin-bottom: 15px;">
+            {{ messages[0] }}
+            </div>
+        {% endif %}
+        {% endwith %}
+
+
+
+        <!-- Assigned Students -->
+        <div class="table-container">
+            <h3>Assigned Students</h3>
+            {% if students %}
+                <table border="1">
+                    <tr>
+                        <th>Name</th>
+                        <th>Grade</th>
+                        <th>Section</th>
+                        <th>School</th>
+                        <th>Parent Email</th>
+                    </tr>
+                    {% for s in students %}
+                    <tr>
+                        <td>{{ s.name }}</td>
+                        <td>{{ s.grade }}</td>
+                        <td>{{ s.section }}</td>
+                        <td>{{ s.school }}</td>
+                        <td>{{ s.parent_email }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <p>No students assigned.</p>
+            {% endif %}
+        </div>
+        <hr>
+        <div>
+            <a href="/dashboard">Back to Dashboard</a>
+        </div>
+
+        </div>
+    </div>
+</body>
+</html>

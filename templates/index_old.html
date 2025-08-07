@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeRider - Main Menu</title>
+    <link rel="stylesheet" href="/static/style.css">
+    
+</head>
+<body>
+    <div class="main-container">
+        <div class="sub=container-1">
+             <img src="/static/saferider.svg" width=250 height=160 alt="SafeRider App Logo">
+        </div>
+        <div class="sub-container">
+            <h1 class="image-header">
+            </h1>
+            <!-- Use url_for() to link to Flask routes -->
+            <a class="menu-btn" href="{{ url_for('driver_login') }}">👨‍✈️ Login Driver</a>
+            <a class="menu-btn" href="{{ url_for('notify_parent') }}">🔔 Parent Notification</a>
+            <a class="menu-btn" href="{{ url_for('parent_register') }}">📝 Parent Registration</a>
+            <a class="menu-btn" href="{{ url_for('admin_login') }}">🧑🏻‍🏫 Admin Login</a>
+        </div>
+        <div>
+            <p align="center">
+                <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js" type="module"></script>
+                <dotlottie-wc src="https://lottie.host/63fb7ec6-4963-4a0e-853a-be9f4c6572a5/7njvjN1VfS.lottie" 
+                            style="width: 250px; height: 250px;" 
+                            speed="1" autoplay loop></dotlottie-wc>     
+            </p>
+            
+        </div>
+    </div>
+    
+</body>
+</html>

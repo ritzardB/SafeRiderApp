@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Success</title>
+
+    <style>
+        body {
+            background: rgb(30, 190, 230);
+            padding-top: 20px;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 50px;
+        }
+        .message {
+            font-size: 1.5em;
+            color: green;
+    }
+    </style>
+    <script>
+        // Automatically redirect after 5 seconds
+        setTimeout(function () {
+            window.location.href = "/parent_login";
+        }, 5000);
+    </script>
+</head>
+<body>
+    <div class="main-container">
+        
+        <div class="sub-container-1">
+             <img src="/static/saferider.svg" width="250" height="160" alt="SafeRider App Logo">   
+        </div>
+
+        <div class="sub-container">
+            <h1>Registration Successful</h1>
+            <div class="message">
+                🎉 Congratulations! You have successfully registered.
+            </div>
+            <p>Thank you for registering!</p>
+            <p>You can now log in to your account.</p>
+            <p>If you are not redirected automatically, <a href="/parent_login">click here</a> to go to the login page.</p>
+            <p>You will be redirected to the login page in a few seconds...</p>
+            </div>
+    </div>
+    
+</body>
+</html>

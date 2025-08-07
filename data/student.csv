@@ -1,0 +1,2 @@
+student_id,parent_name,student_name,phone,parent_email,grade,section,school,student_photo_url,photo_url
+stu1000,Richard Balabarcon,Julian Chris,971506415751,rbalabarcon@gmail.com,12,12-A,Richmindale Abu Dhabi,/static/uploads/Julian_Chris_20090411_22.jpeg,/static/uploads/Julian_Chris_20090411_22.jpeg

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent's Login page</title>
+    <link rel="stylesheet" href="/static/style.css"/>
+
+</head>
+<body>
+    <div class="main-container">
+        <div class="sub-container-1">
+            <img src="/static/saferider.png" width="250" height="160" alt="SafeRider Logo"> 
+        </div>
+        
+        <div class="sub-container">
+
+            <h1 class="headliner">Parent's Login</h1>
+
+            <form method="post">
+                <table>
+                    <tr>
+                        <td><label for="parent_username">Username:</label></td>
+                        <td><input type="text" id="parent_username" name="parent_username" required></td>
+                    </tr>
+                    <tr>
+                        <td><label for="parent_password">Password:</label></td>
+                        <td><input type="password" id="parent_password" name="parent_password" required></td>
+                    </tr>
+                </table>
+
+                <button type="submit">Login</button>
+                </form>
+            <br>
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <p style="color:red">{{ messages[0] }}</p>
+            {% endif %}
+            {% endwith %}
+
+            <p>Not a registered Parent?</p>
+            <p>
+
+                Sign up here → 
+                <a href="{{ url_for('parent_register') }}">Register here</a>
+            </p>
+        </div>
+        
+    </div>
+    
+</body>
+</html>
+

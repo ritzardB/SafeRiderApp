@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Registration</title>
+    <link rel="stylesheet" href="/static/style.css">
+    
+</head  >
+<body>
+    <div class="main-container">
+        <div class="sub-container-1">
+             <img src="/static/saferider.svg" width="250" height="160" alt="SafeRider App Logo">   
+        </div>
+        <div class="sub-container">
+            <h1>Driver Registration</h1>
+            <form method="POST">
+            <table>
+            <tr>
+                <tr>
+                    <td align="right"><label for="name">User Name:</label></td>
+                    <td align="left"><input type="text" id="user_name" name="user_name" required></td>
+                </tr>
+                <tr>
+                    <td align="right"><label for="name">Full Name:</label></td>
+                    <td align="left"><input type="text" id="name" name="name" required></td>
+                </tr>
+                <tr>
+                    <td align="right"><label for="name">Nickname:</label></td>
+                    <td align="left"><input type="text" id="alias" name="alias" placeholder="e.g., Kuya John" required></td>
+                </tr>
+            
+                <tr>
+                    <td align="right"><label for="email">Email:</label></td>
+                    <td align="left"><input type="email" id="email" name="email" required></td>
+
+                </tr>
+                <tr>
+                    <td align="right"><label for="confirm_email">Confirm Email:</label></td>
+                    <td align="left"><input type="email" id="confirm_email" name="confirm_email" required></td>
+                </tr>
+                <tr>
+                    <td align="right"><label for="password">Password:</label></td>
+                    <td align="left"><input type="password" id="password" name="password" required></td>
+                </tr>
+                <tr>
+                    <td align="right"><label for="confirm_password">Confirm Password:</label></td>
+                    <td align="left"><input type="password" id="confirm_password" name="confirm_password" required></td>
+                </tr>
+                <tr>
+                    <td align="right"><label for="phone">Phone:</label></td>
+                    <td align="left"><input type="text" id="phone" name="phone" required></td>  
+                <tr>  
+                    <td align="right"><label for="vehicle">Vehicle:</label></td>
+                    <td align="left"><input type="text" id="vehicle" name="vehicle" required></td>
+                </tr>
+                <tr>
+                    <td align="right"><label for="license_plate">License Plate:</label></td>
+                    <td align="left"><input type="text" id="license_plate" name="license_plate" required></td>
+                </tr>
+                <tr>
+                    <!-- <td align="right"><label for="Select Students">Select Students:</label></td>
+                    <td>
+                        <select name="assigned_students" multiple>
+                        {% for student in students %}
+                            <option value="{{ student.name }}">{{ student.name }}</option>
+                        {% endfor %}
+                        </select>
+                    </td> -->
+                </tr>
+                <tr>
+                    <td></td>
+                    <td align="center"><button type="submit">Register</button></td>
+                </tr>
+
+                <tr>
+                </tr>
+        </table>
+        
+        
+    </div>
+        <div class="sub-container-below">
+            <a href="/"><img src="/static/home.svg" width=50 height=50></a>
+        </div>
+    </div>
+</form>
+</body>
+</html>

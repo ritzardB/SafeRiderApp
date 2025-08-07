@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeRider App Main Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+   
+</head>
+<body>
+    <div class="main-container">
+        <div class="sub-container-1">
+             <img src="/static/saferider.svg" width="250" height="160" alt="SafeRider App Logo">   
+        </div>
+        <div class="table-container">
+            <h2>Admin Dashboard</h2>
+            <h3>Drivers</h3>
+            <table border="1">
+                <tr><th>Name</th><th>Email</th><th>Vehicle</th><th>Students</th></tr>
+                {% for d in drivers %}
+                <tr>
+                    <td>{{ d.name }}</td>
+                    <td>{{ d.email }}</td>
+                    <td>{{ d.vehicle }}</td>
+                    <td>{{ d.assigned_students }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <h3>Registered Students</h3>
+            <table border="1">
+                <tr><th>Name</th><th>Grade</th><th>School</th><th>Parent Email</th></tr>
+                {% for s in students %}
+                <tr>
+                    <td>{{ s.student_name }}</td>
+                    <td>{{ s.grade }}</td>
+                    <td>{{ s.section }}</td>
+                    <td>{{ s.school }}</td>
+                    <td>{{ s.parent_email }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <h3>Notification History</h3>
+            <p>Click here... <a href="{{ url_for('export_history_pdf') }}">📄 Export History as PDF</a></p>
+            <table border="1">
+                <tr><th>Time</th><th>Student</th><th>Location</th><th>Driver</th></tr>
+                {% for h in history %}
+                <tr>
+                    <td>{{ h.timestamp }}</td>
+                    <td>{{ h.student }}</td>
+                    <td>{{ h.location }}</td>
+                    <td>{{ h.driver }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+           
+        </div>
+        <br>
+        <div>
+             <a href="{{ url_for('admin_logout') }}">Logout</a>
+
+        </div>
+    </div>
+    
+</body>
+</html>
