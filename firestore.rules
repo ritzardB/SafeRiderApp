@@ -1,0 +1,131 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return signedIn()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : null;
+    }
+
+    function isAdmin() {
+      return signedIn() && role() == 'admin';
+    }
+
+    function isParent() {
+      return signedIn() && role() == 'parent';
+    }
+
+    function isDriver() {
+      return signedIn() && role() == 'driver';
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role in ['parent', 'driver'];
+      allow update: if isAdmin()
+        || (request.auth.uid == uid
+            && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    match /parents/{parentId} {
+      allow read: if isAdmin()
+        || (isParent() && resource.data.authUID == request.auth.uid);
+      allow create: if isAdmin()
+        || (isParent() && request.resource.data.authUID == request.auth.uid);
+      allow update: if isAdmin()
+        || (isParent() && resource.data.authUID == request.auth.uid
+            && request.resource.data.authUID == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    match /drivers/{driverId} {
+      allow read: if isAdmin()
+        || (isDriver() && resource.data.authUID == request.auth.uid);
+      allow create: if isAdmin()
+        || (isDriver() && request.resource.data.authUID == request.auth.uid);
+      allow update: if isAdmin()
+        || (isDriver() && resource.data.authUID == request.auth.uid
+            && request.resource.data.authUID == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    match /students/{studentId} {
+      allow read: if isAdmin()
+        || (isParent() && resource.data.parentId != null
+            && get(/databases/$(database)/documents/parents/$(resource.data.parentId)).data.authUID == request.auth.uid)
+        || (isDriver() && resource.data.driverId != null
+            && get(/databases/$(database)/documents/drivers/$(resource.data.driverId)).data.authUID == request.auth.uid);
+
+      allow create: if isAdmin()
+        || (isParent() && request.resource.data.parentId != null
+            && get(/databases/$(database)/documents/parents/$(request.resource.data.parentId)).data.authUID == request.auth.uid);
+
+      allow update: if isAdmin()
+        || (isParent() && resource.data.parentId != null
+            && request.resource.data.parentId == resource.data.parentId
+            && get(/databases/$(database)/documents/parents/$(resource.data.parentId)).data.authUID == request.auth.uid)
+        || (isDriver() && resource.data.driverId != null
+            && request.resource.data.driverId == resource.data.driverId
+            && get(/databases/$(database)/documents/drivers/$(resource.data.driverId)).data.authUID == request.auth.uid);
+
+      allow delete: if isAdmin();
+    }
+
+    match /rides/{rideId} {
+      allow read: if isAdmin()
+        || (isParent()
+            && get(/databases/$(database)/documents/students/$(resource.data.studentId)).data.parentId != null
+            && get(/databases/$(database)/documents/parents/$(get(/databases/$(database)/documents/students/$(resource.data.studentId)).data.parentId)).data.authUID == request.auth.uid)
+        || (isDriver()
+            && get(/databases/$(database)/documents/drivers/$(resource.data.driverId)).data.authUID == request.auth.uid);
+
+      allow create, update: if isAdmin()
+        || (isDriver()
+            && get(/databases/$(database)/documents/drivers/$(request.resource.data.driverId)).data.authUID == request.auth.uid);
+
+      allow delete: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isAdmin()
+        || (isParent()
+            && get(/databases/$(database)/documents/parents/$(resource.data.parentId)).data.authUID == request.auth.uid);
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /expenses/{expenseId} {
+      allow read: if isAdmin()
+        || (isDriver()
+            && resource.data.driverId != null
+            && get(/databases/$(database)/documents/drivers/$(resource.data.driverId)).data.authUID == request.auth.uid);
+      allow create, update: if isAdmin()
+        || (isDriver()
+            && request.resource.data.driverId != null
+            && get(/databases/$(database)/documents/drivers/$(request.resource.data.driverId)).data.authUID == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.recipientUID == request.auth.uid);
+      allow create: if isAdmin() || isDriver();
+      allow update: if isAdmin()
+        || (signedIn() && resource.data.recipientUID == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    match /systemLogs/{logId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+  }
+}
