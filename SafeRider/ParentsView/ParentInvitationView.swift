@@ -275,13 +275,12 @@ struct ParentDriverInvitationView: View {
                     SafeRiderTheme.primaryText
                 )
                 .textSelection(.enabled)
+            
+            let expirationInterval: TimeInterval = 24 * 60 * 60
 
-            let expirationTime = expiresAt.formatted(
-                date: .omitted,
-                time: .shortened
-            )
+            let expiresAt = Date().addingTimeInterval(expirationInterval)
 
-            Text("Expires \(expirationTime)")
+            Text("Expires \(expirationInterval)")
                 .font(.caption)
                 .foregroundStyle(
                     SafeRiderTheme.danger

@@ -1888,23 +1888,11 @@ final class DataManager: ObservableObject {
     
     // MARK: - Transportation Schedule Mapping
     
-    private func transportationSchedule(
-        from data: [String: Any]
-    ) -> TransportationSchedule? {
-        
+    private func transportationSchedule(from data: [String: Any]) -> TransportationSchedule? {
         guard
-            let id = uuid(
-                data,
-                "id"
-            ),
-            let parentId = uuid(
-                data,
-                "parentId"
-            ),
-            let studentId = uuid(
-                data,
-                "studentId"
-            )
+            let id = uuid(data, "id"),
+            let parentId = uuid(data, "parentId"),
+            let studentId = uuid(data, "studentId")
         else {
             return nil
         }
@@ -1913,53 +1901,16 @@ final class DataManager: ObservableObject {
             id: id,
             parentId: parentId,
             studentId: studentId,
-            driverId: uuid(
-                data,
-                "driverId"
-            ) ?? <#default value#>,
-            weekdays:
-                data["weekdays"] as? [Int]
-            ?? [2, 3, 4, 5, 6],
-            morningPickupTime:
-                date(
-                    data,
-                    "morningPickupTime"
-                ),
-            afternoonPickupTime:
-                date(
-                    data,
-                    "afternoonPickupTime"
-                ),
-            pickupLocation:
-                string(
-                    data,
-                    "pickupLocation"
-                ) ?? "",
-            schoolLocation:
-                string(
-                    data,
-                    "schoolLocation"
-                ) ?? "",
-            homeLocation:
-                string(
-                    data,
-                    "homeLocation"
-                ) ?? "",
-            isActive:
-                data["isActive"] as? Bool
-            ?? true,
-            createdAt:
-                date(
-                    data,
-                    "createdAt",
-                    fallback: Date()
-                ),
-            updatedAt:
-                date(
-                    data,
-                    "updatedAt",
-                    fallback: Date()
-                )
+            driverId: uuid(data, "driverId")!, // Removed the unresolved ?? if your driverId allows an optional UUID?
+            weekdays: data["weekdays"] as? [Int] ?? [2, 3, 4, 5, 6], // Fixed the missing expression here
+            morningPickupTime: date(data, "morningPickupTime"),
+            afternoonPickupTime: date(data, "afternoonPickupTime"),
+            pickupLocation: string(data, "pickupLocation") ?? "",
+            schoolLocation: string(data, "schoolLocation") ?? "",
+            homeLocation: string(data, "homeLocation") ?? "",
+            isActive: data["isActive"] as? Bool ?? true,
+            createdAt: date(data, "createdAt", fallback: Date()),
+            updatedAt: date(data, "updatedAt", fallback: Date())
         )
     }
 }
