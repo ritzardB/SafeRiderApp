@@ -406,25 +406,8 @@ struct ParentDriverInvitationView: View {
 
     // MARK: - Token Formatting
 
-    private func formatToken(
-        _ token: String
-    ) -> String {
-        guard token.count == 12 else {
-            return token
-        }
-
-        let index = token.index(
-            token.startIndex,
-            offsetBy: 6
-        )
-
-        return String(
-            token[..<index]
-        )
-        + "-"
-        + String(
-            token[index...]
-        )
+    private func formatToken(_ token: String) -> String {
+        token
     }
 
     // MARK: - Reset
