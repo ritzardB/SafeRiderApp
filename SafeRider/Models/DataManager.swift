@@ -33,6 +33,7 @@ final class DataManager: ObservableObject {
     
     private let db = Firestore.firestore()
     private var listeners: [ListenerRegistration] = []
+    private var driverScheduleCache: [TransportationSchedule] = []
     
     private var currentUID: String?
     private var currentRole: UserRole?
@@ -269,65 +270,81 @@ final class DataManager: ObservableObject {
     // MARK: - Firestore Listeners
     
     private func startListeners() {
-        guard
-            let role = currentRole,
-            let uid = currentUID
-        else {
+
+        print("🔵 SafeRider: startListeners() CALLED")
+        print(
+            "🔵 SafeRider: currentUID =",
+            currentUID ?? "NIL"
+        )
+        print(
+            "🔵 SafeRider: currentRole =",
+            currentRole?.rawValue ?? "NIL"
+        )
+
+        guard let role = currentRole,
+              let uid = currentUID else {
+            print(
+                "🔴 SafeRider: startListeners() missing role or UID"
+            )
             return
         }
-        
+
+        // Remove existing listeners before starting new ones.
         listeners.forEach { $0.remove() }
         listeners.removeAll()
-        
+
+        print(
+            "🟢 SafeRider: Starting listeners for role =",
+            role.rawValue
+        )
+
         // MARK: Admin
-        
+
         if role == .admin {
             addCollectionListener("parents") { documents in
                 self.parents = documents.compactMap {
                     self.parent(from: $0.data())
                 }
-                
                 self.refreshCurrentProfile()
             }
-            
+
             addCollectionListener("drivers") { documents in
                 self.drivers = documents.compactMap {
                     self.driver(from: $0.data())
                 }
-                
                 self.refreshCurrentProfile()
             }
-            
+
             addCollectionListener("students") { documents in
                 self.students = documents.compactMap {
                     self.student(from: $0.data())
                 }
             }
-            
+
             addCollectionListener("rides") { documents in
                 self.rides = documents.compactMap {
                     self.ride(from: $0.data())
                 }
             }
-            
+
             addCollectionListener("payments") { documents in
                 self.payments = documents.compactMap {
                     self.payment(from: $0.data())
                 }
             }
-            
+
             addCollectionListener("expenses") { documents in
                 self.expenses = documents.compactMap {
                     self.expense(from: $0.data())
                 }
             }
-            
+
             addCollectionListener("systemLogs") { documents in
                 self.systemLogs = documents.compactMap {
                     self.log(from: $0.data())
                 }
             }
-            
+
             addCollectionListener("transportationSchedules") { documents in
                 self.transportationSchedules = documents.compactMap {
                     self.transportationSchedule(
@@ -335,14 +352,14 @@ final class DataManager: ObservableObject {
                     )
                 }
             }
-            
+
             return
         }
-        
+
         // MARK: Role-specific Listeners
-        
+
         switch role {
-            
+
         case .parent:
             
             // Parent profile
@@ -367,6 +384,14 @@ final class DataManager: ObservableObject {
             }
             
             // Children
+            print(
+                "👨‍👩‍👧 SafeRider: Starting parent children listener"
+            )
+            print(
+                "👨‍👩‍👧 SafeRider: Query parentAuthUID =",
+                uid
+            )
+
             addQueryListener(
                 db.collection("students")
                     .whereField(
@@ -374,9 +399,41 @@ final class DataManager: ObservableObject {
                         isEqualTo: uid
                     )
             ) { documents in
-                
-                self.students = documents.compactMap {
+
+                print(
+                    "👨‍👩‍👧 SafeRider: Children listener returned",
+                    documents.count,
+                    "document(s)"
+                )
+
+                for document in documents {
+                    print(
+                        "👨‍👩‍👧 SafeRider: Child document =",
+                        document.documentID
+                    )
+                    print(
+                        "👨‍👩‍👧 SafeRider: Child data =",
+                        document.data()
+                    )
+                }
+
+                let loadedStudents = documents.compactMap {
                     self.student(from: $0.data())
+                }
+
+                self.students = loadedStudents
+
+                print(
+                    "👨‍👩‍👧 SafeRider: Loaded",
+                    loadedStudents.count,
+                    "student(s) for parent"
+                )
+
+                // Load the drivers assigned to these students.
+                Task {
+                    await self.loadDrivers(
+                        for: loadedStudents
+                    )
                 }
             }
             
@@ -426,7 +483,9 @@ final class DataManager: ObservableObject {
                 }
                 
                 self.students = assignedStudents
-                
+                // Re-apply cached schedules now that assigned students are available.
+                self.applyDriverScheduleFilter()
+
                 Task {
                     await self.loadParents(
                         for: assignedStudents
@@ -480,28 +539,32 @@ final class DataManager: ObservableObject {
             addQueryListener(
                 db.collection("transportationSchedules")
             ) { documents in
-                
-                let allSchedules = documents.compactMap {
+
+                self.driverScheduleCache = documents.compactMap {
                     self.transportationSchedule(
                         from: $0.data()
                     )
                 }
-                
-                let assignedIDs = Set(
-                    self.students.map(\.id)
-                )
-                
-                self.transportationSchedules =
-                allSchedules.filter {
-                    assignedIDs.contains(
-                        $0.studentId
-                    )
-                }
+
+                self.applyDriverScheduleFilter()
             }
             
         case .admin:
             break
         }
+    }
+    
+    private func applyDriverScheduleFilter() {
+        let assignedIDs = Set(
+            students.map(\.id)
+        )
+
+        transportationSchedules =
+            driverScheduleCache.filter {
+                assignedIDs.contains(
+                    $0.studentId
+                )
+            }
     }
     
     private func addCollectionListener(
@@ -560,6 +623,14 @@ final class DataManager: ObservableObject {
             currentParent = parents.first {
                 $0.authUID == uid
             }
+
+            print("""
+            👤 SafeRider: Parent profile refreshed
+            Parent loaded: \(currentParent != nil)
+            Parent ID: \(currentParent?.id.uuidString ?? "NIL")
+            Parent name: \(currentParent?.motherName ?? "NIL")
+            Parent email: \(currentParent?.email ?? "NIL")
+            """)
             
         case .driver:
             currentDriver = drivers.first {
@@ -592,6 +663,54 @@ final class DataManager: ObservableObject {
                 self.payment(from: $0.data())
             }
         }
+    }
+    
+    // MARK: - Load Drivers
+    
+    private func loadDrivers(
+        for students: [Student]
+    ) async {
+        
+        let driverIDs = Set(
+            students.compactMap { $0.driverId }
+        )
+        
+        guard !driverIDs.isEmpty else {
+            drivers = []
+            return
+        }
+        
+        var loadedDrivers: [Driver] = []
+        
+        for driverID in driverIDs {
+            do {
+                let snapshot = try await db
+                    .collection("drivers")
+                    .document(driverID.uuidString)
+                    .getDocument()
+                
+                guard let data = snapshot.data() else {
+                    continue
+                }
+                
+                guard let driver = driver(from: data) else {
+                    continue
+                }
+                
+                loadedDrivers.append(driver)
+                
+            } catch {
+                print(
+                    "❌ Failed to load driver \(driverID): \(error.localizedDescription)"
+                )
+            }
+        }
+        
+        drivers = loadedDrivers
+        
+        print(
+            "🚗 Loaded \(loadedDrivers.count) driver(s) for parent."
+        )
     }
     
     // MARK: - Parent Schedule Listener
@@ -862,38 +981,46 @@ final class DataManager: ObservableObject {
         studentId: UUID,
         driverId: UUID,
         status: RideStatus
-    ) {
+    ) -> UUID {
+
         if let existing = rides.first(
             where: {
-                $0.studentId == studentId
-                && $0.driverId == driverId
-                && Calendar.current.isDate(
+                $0.studentId == studentId &&
+                $0.driverId == driverId &&
+                Calendar.current.isDate(
                     $0.date,
                     inSameDayAs: Date()
                 )
             }
         ) {
+
             var updated = existing
             updated.status = status
-            
+
             if status == .pickedUp {
                 updated.pickupTime = Date()
             }
-            
+
             if status == .arrivedHome {
                 updated.dropoffTime = Date()
             }
-            
+
             updateRide(updated)
+
+            return updated.id
+
         } else {
-            addRide(
-                Ride(
-                    studentId: studentId,
-                    driverId: driverId,
-                    date: Date(),
-                    status: status
-                )
+
+            let newRide = Ride(
+                studentId: studentId,
+                driverId: driverId,
+                date: Date(),
+                status: status
             )
+
+            addRide(newRide)
+
+            return newRide.id
         }
     }
     
@@ -1042,10 +1169,8 @@ final class DataManager: ObservableObject {
     
     // MARK: - Transportation Schedule
     
-    func saveTransportationSchedule(
-        _ schedule: TransportationSchedule
-    ) {
-        var data: [String: Any] = [
+    func saveTransportationSchedule(_ schedule: TransportationSchedule) {
+        let data: [String: Any] = [
             "id": schedule.id.uuidString,
             "parentId": schedule.parentId.uuidString,
             "driverId": schedule.driverId.uuidString,
@@ -1055,34 +1180,54 @@ final class DataManager: ObservableObject {
             "schoolLocation": schedule.schoolLocation,
             "homeLocation": schedule.homeLocation,
             "isActive": schedule.isActive,
-            "createdAt": Timestamp(
-                date: schedule.createdAt
-            ),
-            "updatedAt": Timestamp(
-                date: Date()
-            )
+            "createdAt": Timestamp(date: validFirestoreDate(schedule.createdAt)),
+            "updatedAt": Timestamp(date: Date())
         ]
         
-        if let morningPickupTime =
-            schedule.morningPickupTime
-        {
-            data["morningPickupTime"] =
-            Timestamp(date: morningPickupTime)
+        var scheduleData = data
+        
+        if let morningPickupTime = schedule.morningPickupTime,
+           isValidFirestoreDate(morningPickupTime) {
+            scheduleData["morningPickupTime"] = Timestamp(date: morningPickupTime)
+        } else {
+            scheduleData["morningPickupTime"] = NSNull()
         }
         
-        if let afternoonPickupTime =
-            schedule.afternoonPickupTime
-        {
-            data["afternoonPickupTime"] =
-            Timestamp(date: afternoonPickupTime)
+        if let afternoonPickupTime = schedule.afternoonPickupTime,
+           isValidFirestoreDate(afternoonPickupTime) {
+            scheduleData["afternoonPickupTime"] = Timestamp(date: afternoonPickupTime)
+        } else {
+            scheduleData["afternoonPickupTime"] = NSNull()
         }
         
-        write(
-            "transportationSchedules",
-            id: schedule.id.uuidString,
-            data: data,
-            merge: true
-        )
+        db.collection("transportationSchedules")
+            .document(schedule.id.uuidString)
+            .setData(scheduleData, merge: true) { error in
+                if let error {
+                    print("❌ Failed to save transportation schedule: \(error.localizedDescription)")
+                } else {
+                    print("✅ Transportation schedule saved: \(schedule.id)")
+                }
+            }
+    }
+    
+    private func isValidFirestoreDate(_ date: Date) -> Bool {
+        let interval = date.timeIntervalSince1970
+        
+        return interval.isFinite &&
+        interval > -62135596800 &&
+        interval < 253402300800
+    }
+    
+    private func validFirestoreDate(_ date: Date) -> Date {
+        if isValidFirestoreDate(date) {
+            return date
+        }
+        
+        print("⚠️ Invalid Firestore date detected: \(date)")
+        print("⚠️ Replacing invalid date with current date.")
+        
+        return Date()
     }
     
     func deleteTransportationSchedule(
@@ -1216,32 +1361,32 @@ final class DataManager: ObservableObject {
         for students: [Student]
     ) async {
         var loadedParents: [Parent] = []
-
+        
         let parentIDs = Set(
             students.compactMap { $0.parentId }
         )
-
+        
         for parentID in parentIDs {
             do {
                 let snapshot = try await db
                     .collection("parents")
                     .document(parentID.uuidString)
                     .getDocument()
-
+                
                 guard let data = snapshot.data() else {
                     continue
                 }
-
+                
                 guard let parent = parent(from: data) else {
                     continue
                 }
-
+                
                 loadedParents.append(parent)
             } catch {
                 errorMessage = error.localizedDescription
             }
         }
-
+        
         parents = loadedParents
     }
     
@@ -1888,12 +2033,19 @@ final class DataManager: ObservableObject {
     
     // MARK: - Transportation Schedule Mapping
     
-    private func transportationSchedule(from data: [String: Any]) -> TransportationSchedule? {
+    private func transportationSchedule(
+        from data: [String: Any]
+    ) -> TransportationSchedule? {
+        
         guard
             let id = uuid(data, "id"),
             let parentId = uuid(data, "parentId"),
-            let studentId = uuid(data, "studentId")
+            let studentId = uuid(data, "studentId"),
+            let driverId = uuid(data, "driverId")
         else {
+            print(
+                "⚠️ Ignoring invalid transportation schedule."
+            )
             return nil
         }
         
@@ -1901,16 +2053,40 @@ final class DataManager: ObservableObject {
             id: id,
             parentId: parentId,
             studentId: studentId,
-            driverId: uuid(data, "driverId")!, // Removed the unresolved ?? if your driverId allows an optional UUID?
-            weekdays: data["weekdays"] as? [Int] ?? [2, 3, 4, 5, 6], // Fixed the missing expression here
-            morningPickupTime: date(data, "morningPickupTime"),
-            afternoonPickupTime: date(data, "afternoonPickupTime"),
-            pickupLocation: string(data, "pickupLocation") ?? "",
-            schoolLocation: string(data, "schoolLocation") ?? "",
-            homeLocation: string(data, "homeLocation") ?? "",
+            driverId: driverId,
+            weekdays: data["weekdays"] as? [Int]
+            ?? [2, 3, 4, 5, 6],
+            morningPickupTime: date(
+                data,
+                "morningPickupTime"
+            ),
+            afternoonPickupTime: date(
+                data,
+                "afternoonPickupTime"
+            ),
+            pickupLocation: string(
+                data,
+                "pickupLocation"
+            ) ?? "",
+            schoolLocation: string(
+                data,
+                "schoolLocation"
+            ) ?? "",
+            homeLocation: string(
+                data,
+                "homeLocation"
+            ) ?? "",
             isActive: data["isActive"] as? Bool ?? true,
-            createdAt: date(data, "createdAt", fallback: Date()),
-            updatedAt: date(data, "updatedAt", fallback: Date())
+            createdAt: date(
+                data,
+                "createdAt",
+                fallback: Date()
+            ),
+            updatedAt: date(
+                data,
+                "updatedAt",
+                fallback: Date()
+            )
         )
     }
 }

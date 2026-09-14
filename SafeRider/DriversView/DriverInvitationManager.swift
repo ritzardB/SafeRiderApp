@@ -225,7 +225,6 @@ enum InvitationTokenHasher {
         token
             .trimmingCharacters(
                 in: .whitespacesAndNewlines)
-                    .replacingOccurrences(of: "-", with: "")
                     .uppercased()
     }
 

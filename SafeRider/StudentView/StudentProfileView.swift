@@ -10,6 +10,7 @@ struct StudentProfileView: View {
     @State private var previewImage: UIImage?
     @State private var isUploadingPhoto = false
     @State private var notificationMessage: NotificationMessage?
+ 
 
     var body: some View {
         ZStack {
@@ -205,6 +206,22 @@ struct StudentProfileView: View {
         }
         .navigationTitle(student.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    EditStudentView(student: student)
+                        .environmentObject(dataManager)
+                } label: {
+                    Label(
+                        "Edit",
+                        systemImage: "pencil"
+                    )
+                }
+                .foregroundStyle(
+                    SafeRiderTheme.orange
+                )
+            }
+        }
         .task(id: selectedPhoto) {
             await handleSelectedPhoto()
         }

@@ -114,7 +114,7 @@ struct DriverDashboardView: View {
                 }
 
                 NavigationLink {
-                    TrackingView()
+                    TransportationTrackingView()
                 } label: {
                     Label(
                         "Ride Tracking",

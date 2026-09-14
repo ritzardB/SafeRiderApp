@@ -131,41 +131,99 @@ struct ParentDriverInvitationView: View {
         )
     }
 
-    // MARK: - Child
+    // MARK: - Child Selection
 
+    @ViewBuilder
     private var childSelectionCard: some View {
         VStack(
             alignment: .leading,
-            spacing: 12
+            spacing: 14
         ) {
-            Text("Child")
-                .font(.headline)
-                .foregroundStyle(
-                    SafeRiderTheme.primaryText
-                )
+            HStack {
+                Text("Select Child")
+                    .font(.headline)
+                    .foregroundStyle(
+                        SafeRiderTheme.primaryText
+                    )
+
+                Spacer()
+
+                if selectedStudentId != nil {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(
+                            SafeRiderTheme.success
+                        )
+                }
+            }
 
             if children.isEmpty {
-                Text(
-                    "Add a child before inviting a driver."
-                )
-                .font(.subheadline)
-                .foregroundStyle(
-                    SafeRiderTheme.secondaryText
-                )
-            } else {
-                Picker(
-                    "Child",
-                    selection: $selectedStudentId
-                ) {
-                    Text("Select Child")
-                        .tag(nil as UUID?)
+                VStack(spacing: 10) {
+                    Image(
+                        systemName: "person.2.slash"
+                    )
+                    .font(.system(size: 32))
+                    .foregroundStyle(
+                        SafeRiderTheme.secondaryText
+                    )
 
-                    ForEach(children) { child in
-                        Text(child.name)
-                            .tag(child.id as UUID?)
-                    }
+                    Text(
+                        "Add a child before inviting a driver."
+                    )
+                    .font(.subheadline)
+                    .foregroundStyle(
+                        SafeRiderTheme.secondaryText
+                    )
+                    .multilineTextAlignment(.center)
                 }
-                .pickerStyle(.menu)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+
+            } else {
+                ScrollView(
+                    .horizontal,
+                    showsIndicators: false
+                ) {
+                    HStack(spacing: 14) {
+                        ForEach(children) { child in
+                            childInvitationCard(
+                                child: child
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 4)
+                }
+
+                if let selectedStudentId,
+                   let selectedChild = children.first(
+                        where: { $0.id == selectedStudentId }
+                   ) {
+                    HStack(spacing: 6) {
+                        Image(
+                            systemName: "checkmark.circle.fill"
+                        )
+                        .foregroundStyle(
+                            SafeRiderTheme.success
+                        )
+
+                        Text(
+                            "\(selectedChild.name) selected"
+                        )
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(
+                            SafeRiderTheme.secondaryText
+                        )
+                    }
+                } else {
+                    Text(
+                        "Tap a child to select them."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(
+                        SafeRiderTheme.secondaryText
+                    )
+                }
             }
         }
         .frame(
@@ -181,6 +239,118 @@ struct ParentDriverInvitationView: View {
                 cornerRadius: 18
             )
         )
+    }
+    
+    // MARK: - Child Invitation Card
+
+    private func childInvitationCard(
+        child: Student
+    ) -> some View {
+
+        let isSelected =
+            selectedStudentId == child.id
+
+        return Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                selectedStudentId = child.id
+            }
+        } label: {
+            VStack(
+                alignment: .leading,
+                spacing: 10
+            ) {
+
+                HStack {
+                    ProfileAvatarView(
+                        name: child.name,
+                        photoURL: child.photoURL,
+                        size: 58
+                    )
+
+                    Spacer()
+
+                    Image(
+                        systemName: isSelected
+                            ? "checkmark.circle.fill"
+                            : "circle"
+                    )
+                    .font(.title3)
+                    .foregroundStyle(
+                        isSelected
+                            ? SafeRiderTheme.success
+                            : SafeRiderTheme.secondaryText
+                    )
+                }
+
+                Spacer(minLength: 2)
+
+                Text(child.name)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(
+                        SafeRiderTheme.primaryText
+                    )
+                    .lineLimit(2)
+
+                HStack(spacing: 5) {
+                    Image(systemName: "graduationcap.fill")
+
+                    Text(
+                        "\(child.grade) • \(child.section)"
+                    )
+                }
+                .font(.caption)
+                .foregroundStyle(
+                    SafeRiderTheme.secondaryText
+                )
+
+                if !child.school.isEmpty {
+                    HStack(spacing: 5) {
+                        Image(systemName: "building.2.fill")
+
+                        Text(child.school)
+                            .lineLimit(1)
+                    }
+                    .font(.caption)
+                    .foregroundStyle(
+                        SafeRiderTheme.secondaryText
+                    )
+                }
+            }
+            .padding(14)
+            .frame(
+                width: 220,
+                height: 175,
+                alignment: .leading
+            )
+            .background(
+                isSelected
+                    ? SafeRiderTheme.orangeTint
+                    : SafeRiderTheme.surface
+            )
+            .overlay {
+                RoundedRectangle(
+                    cornerRadius: 16
+                )
+                .stroke(
+                    isSelected
+                        ? SafeRiderTheme.orange
+                        : Color.clear,
+                    lineWidth: 2
+                )
+            }
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius: 16
+                )
+            )
+            .shadow(
+                color: .black.opacity(0.06),
+                radius: 5,
+                y: 2
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Generate

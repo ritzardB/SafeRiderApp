@@ -44,11 +44,11 @@ struct ParentDashboardView: View {
 
             NavigationStack {
                 parentChildrenView
-                    .navigationTitle("Children")
+                    .navigationTitle("Manage Children")
             }
             .tabItem {
                 Label(
-                    "Children",
+                    "Manage Children",
                     systemImage: "person.2.fill"
                 )
             }
@@ -104,19 +104,30 @@ struct ParentDashboardView: View {
     @ViewBuilder
     private var parentHomeView: some View {
         ZStack {
+
             SafeRiderTheme.orangeTint
                 .ignoresSafeArea()
 
             if let parent = dataManager.currentParent {
+
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
+
+                    VStack(
+                        alignment: .leading,
+                        spacing: 18
+                    ) {
+
                         parentHeader(parent)
+
                         todaySection(parent)
+
                         quickActions
                     }
                     .padding()
                 }
+
             } else {
+
                 ContentUnavailableView(
                     "Profile Not Found",
                     systemImage:
@@ -134,14 +145,20 @@ struct ParentDashboardView: View {
 
     @ViewBuilder
     private func parentHeader(_ parent: Parent) -> some View {
+
         HStack(spacing: 14) {
+
             ProfileAvatarView(
                 name: parentDisplayName(parent),
                 photoURL: parent.photoURL,
                 size: 68
             )
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(
+                alignment: .leading,
+                spacing: 4
+            ) {
+
                 Text("Welcome,")
                     .font(.subheadline)
                     .foregroundStyle(
@@ -185,9 +202,13 @@ struct ParentDashboardView: View {
 
         let children = dataManager.students(for: parent)
 
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(
+            alignment: .leading,
+            spacing: 12
+        ) {
 
             HStack {
+
                 Text("Today's Transportation")
                     .font(.headline)
                     .foregroundStyle(
@@ -211,6 +232,7 @@ struct ParentDashboardView: View {
                     alignment: .leading,
                     spacing: 8
                 ) {
+
                     Image(
                         systemName: "person.2.slash"
                     )
@@ -234,6 +256,7 @@ struct ParentDashboardView: View {
                     Button {
                         showingAddChild = true
                     } label: {
+
                         Label(
                             "Add Child",
                             systemImage:
@@ -243,7 +266,9 @@ struct ParentDashboardView: View {
                     .buttonStyle(
                         .borderedProminent
                     )
-                    .tint(SafeRiderTheme.orange)
+                    .tint(
+                        SafeRiderTheme.orange
+                    )
                 }
                 .padding()
                 .frame(
@@ -262,9 +287,18 @@ struct ParentDashboardView: View {
             } else {
 
                 ForEach(children) { child in
+
                     childSummaryCard(child)
                 }
             }
+        }
+        .sheet(
+            isPresented: $showingAddChild
+        ) {
+
+            AddStudentView()
+                .environmentObject(dataManager)
+                .environmentObject(authManager)
         }
     }
 
@@ -275,7 +309,16 @@ struct ParentDashboardView: View {
         _ child: Student
     ) -> some View {
 
-        VStack(alignment: .leading, spacing: 12) {
+        let schedule = transportationSchedule(
+            for: child
+        )
+
+        VStack(
+            alignment: .leading,
+            spacing: 12
+        ) {
+
+            // MARK: Child Information
 
             HStack(spacing: 12) {
 
@@ -289,6 +332,7 @@ struct ParentDashboardView: View {
                     alignment: .leading,
                     spacing: 3
                 ) {
+
                     Text(child.name)
                         .font(.headline)
                         .foregroundStyle(
@@ -310,66 +354,198 @@ struct ParentDashboardView: View {
 
             Divider()
 
-            // MARK: Morning Pickup
+            // MARK: Schedule Status
 
-            HStack {
-                Label(
-                    "Morning Pickup",
-                    systemImage: "sunrise.fill"
-                )
-                .foregroundStyle(
-                    SafeRiderTheme.primaryText
-                )
+            if let schedule {
 
-                Spacer()
+                // MARK: Morning Pickup
 
-                Text(morningPickupTime)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(
-                        SafeRiderTheme.blue
+                if let morningTime =
+                    schedule.morningPickupTime {
+
+                    HStack {
+
+                        Label(
+                            "Morning Pickup",
+                            systemImage:
+                                "sunrise.fill"
+                        )
+                        .foregroundStyle(
+                            SafeRiderTheme.primaryText
+                        )
+
+                        Spacer()
+
+                        Text(
+                            formattedTime(
+                                morningTime
+                            )
+                        )
+                        .fontWeight(.semibold)
+                        .foregroundStyle(
+                            SafeRiderTheme.blue
+                        )
+                    }
+                }
+
+                // MARK: Afternoon Pickup
+
+                if let afternoonTime =
+                    schedule.afternoonPickupTime {
+
+                    HStack {
+
+                        Label(
+                            "Afternoon Pickup",
+                            systemImage:
+                                "sunset.fill"
+                        )
+                        .foregroundStyle(
+                            SafeRiderTheme.primaryText
+                        )
+
+                        Spacer()
+
+                        Text(
+                            formattedTime(
+                                afternoonTime
+                            )
+                        )
+                        .fontWeight(.semibold)
+                        .foregroundStyle(
+                            SafeRiderTheme.blue
+                        )
+                    }
+                }
+
+                // MARK: Active Status
+
+                HStack {
+
+                    Label(
+                        schedule.isActive
+                            ? "Transportation Active"
+                            : "Transportation Inactive",
+                        systemImage:
+                            schedule.isActive
+                            ? "checkmark.circle.fill"
+                            : "pause.circle.fill"
                     )
-            }
-
-            // MARK: Afternoon Pickup
-
-            HStack {
-                Label(
-                    "Afternoon Pickup",
-                    systemImage: "sunset.fill"
-                )
-                .foregroundStyle(
-                    SafeRiderTheme.primaryText
-                )
-
-                Spacer()
-
-                Text(afternoonPickupTime)
-                    .fontWeight(.semibold)
+                    .font(.caption)
                     .foregroundStyle(
-                        SafeRiderTheme.blue
+                        schedule.isActive
+                        ? SafeRiderTheme.success
+                        : SafeRiderTheme.secondaryText
                     )
+
+                    Spacer()
+                }
+
+                // MARK: Manage Schedule
+
+                NavigationLink {
+
+                    ParentTransportationScheduleView()
+
+                } label: {
+
+                    Label(
+                        "Manage Schedule",
+                        systemImage:
+                            "calendar.badge.clock"
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(SafeRiderTheme.orange)
+
+            } else {
+
+                // MARK: No Schedule
+
+                VStack(
+                    alignment: .leading,
+                    spacing: 8
+                ) {
+
+                    HStack(spacing: 8) {
+
+                        Image(
+                            systemName:
+                                "calendar.badge.exclamationmark"
+                        )
+                        .foregroundStyle(
+                            SafeRiderTheme.orange
+                        )
+
+                        Text(
+                            "Transportation schedule not configured"
+                        )
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(
+                            SafeRiderTheme.primaryText
+                        )
+                    }
+
+                    Text(
+                        "Set pickup times and locations "
+                        + "for \(child.name)."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(
+                        SafeRiderTheme.secondaryText
+                    )
+
+                    NavigationLink {
+
+                        ParentTransportationScheduleView(student: child)
+
+                    } label: {
+
+                        Label(
+                            "Set Schedule",
+                            systemImage:
+                                "calendar.badge.plus"
+                        )
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(
+                        .borderedProminent
+                    )
+                    .tint(
+                        SafeRiderTheme.orange
+                    )
+                }
             }
 
             // MARK: Tracking
 
-            NavigationLink {
-                ParentTrackingView(student: child)
-            } label: {
-                Label(
-                    "View Tracking",
-                    systemImage: "location.fill"
-                )
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            .tint(SafeRiderTheme.blue)
+//            NavigationLink {
+//
+//                ParentTrackingView(
+//                    student: child
+//                )
+//
+//            } label: {
+//
+//                Label(
+//                    "View Tracking",
+//                    systemImage: "location.fill"
+//                )
+//                .frame(maxWidth: .infinity)
+//            }
+//            .buttonStyle(.bordered)
+//            .tint(SafeRiderTheme.blue)
         }
         .padding()
         .background(
             SafeRiderTheme.surface
         )
         .clipShape(
-            RoundedRectangle(cornerRadius: 18)
+            RoundedRectangle(
+                cornerRadius: 18
+            )
         )
         .shadow(
             color: .black.opacity(0.07),
@@ -378,30 +554,33 @@ struct ParentDashboardView: View {
         )
     }
 
-    // MARK: - Temporary Transportation Times
+    // MARK: - Transportation Schedule Lookup
 
-    /*
-     These are temporary display values until the
-     TransportationSchedule is connected to DataManager.
+    private func transportationSchedule(
+        for student: Student
+    ) -> TransportationSchedule? {
 
-     Parent-configured values will eventually replace
-     these helpers, for example:
-
-         7:15 AM
-         3:00 PM
-     */
-
-    private var morningPickupTime: String {
-        "7:15 AM"
+        dataManager.transportationSchedules.first {
+            $0.studentId == student.id
+        }
     }
 
-    private var afternoonPickupTime: String {
-        "3:00 PM"
+    // MARK: - Time Formatting
+
+    private func formattedTime(
+        _ date: Date
+    ) -> String {
+
+        date.formatted(
+            date: .omitted,
+            time: .shortened
+        )
     }
 
     // MARK: - Quick Actions
 
     private var quickActions: some View {
+
         VStack(
             alignment: .leading,
             spacing: 12
@@ -413,50 +592,48 @@ struct ParentDashboardView: View {
                     SafeRiderTheme.primaryText
                 )
 
-            HStack(spacing: 12) {
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12)
+                ],
+                spacing: 12
+            ) {
 
-                quickAction(
-                    title: "Children",
-                    icon: "person.2.fill",
-                    tab: .children
-                )
-
+                // Driver Info
                 NavigationLink {
-                    ParentTrackingView()
+                    ParentDriverInfoView()
                 } label: {
-
-                    VStack(spacing: 8) {
-
-                        Image(
-                            systemName: "location.fill"
-                        )
-                        .font(.title3)
-                        .foregroundStyle(
-                            SafeRiderTheme.orange
-                        )
-
-                        Text("Tracking")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(
-                                SafeRiderTheme.primaryText
-                            )
-                    }
-                    .frame(
-                        maxWidth: .infinity,
-                        minHeight: 72
-                    )
-                    .background(
-                        SafeRiderTheme.surface
-                    )
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: 14
-                        )
+                    quickActionContent(
+                        title: "Driver Info",
+                        icon: "person.crop.rectangle.stack.fill"
                     )
                 }
                 .buttonStyle(.plain)
 
+                // Tracking
+                NavigationLink {
+                    TransportationTrackingView()
+                } label: {
+                    quickActionContent(
+                        title: "Tracking",
+                        icon: "location.fill"
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Schedule
+                NavigationLink {
+                    ParentTransportationScheduleView()
+                } label: {
+                    quickActionContent(
+                        title: "Schedule",
+                        icon: "calendar.badge.clock"
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Payments
                 quickAction(
                     title: "Payments",
                     icon: "creditcard.fill",
@@ -472,56 +649,66 @@ struct ParentDashboardView: View {
         icon: String,
         tab: ParentTab
     ) -> some View {
-
         Button {
             selectedTab = tab
         } label: {
-
-            VStack(spacing: 8) {
-
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundStyle(
-                        SafeRiderTheme.orange
-                    )
-
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(
-                        SafeRiderTheme.primaryText
-                    )
-            }
-            .frame(
-                maxWidth: .infinity,
-                minHeight: 72
-            )
-            .background(
-                SafeRiderTheme.surface
-            )
-            .clipShape(
-                RoundedRectangle(
-                    cornerRadius: 14
-                )
+            quickActionContent(
+                title: title,
+                icon: icon
             )
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func quickActionContent(
+        title: String,
+        icon: String
+    ) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(
+                    SafeRiderTheme.orange
+                )
+
+            Text(title)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(
+                    SafeRiderTheme.primaryText
+                )
+                .lineLimit(1)
+        }
+        .frame(
+            maxWidth: .infinity,
+            minHeight: 78,
+            maxHeight: 78
+        )
+        .background(
+            SafeRiderTheme.surface
+        )
+        .clipShape(
+            RoundedRectangle(cornerRadius: 14)
+        )
     }
 
     // MARK: - Children
 
     @ViewBuilder
     private var parentChildrenView: some View {
+
         ZStack {
 
             SafeRiderTheme.orangeTint
                 .ignoresSafeArea()
 
-            if let parent = dataManager.currentParent {
+            if let parent =
+                dataManager.currentParent {
 
-                let children = dataManager.students(
-                    for: parent
-                )
+                let children =
+                    dataManager.students(
+                        for: parent
+                    )
 
                 ScrollView {
 
@@ -530,17 +717,24 @@ struct ParentDashboardView: View {
                         ForEach(children) { child in
 
                             NavigationLink {
+
                                 StudentProfileView(
                                     student: child
                                 )
+
                             } label: {
-                                childDirectoryCard(child)
+
+                                childDirectoryCard(
+                                    child
+                                )
                             }
                             .buttonStyle(.plain)
                         }
 
                         Button {
+
                             showingAddChild = true
+
                         } label: {
 
                             Label(
@@ -548,7 +742,9 @@ struct ParentDashboardView: View {
                                 systemImage:
                                     "person.badge.plus"
                             )
-                            .frame(maxWidth: .infinity)
+                            .frame(
+                                maxWidth: .infinity
+                            )
                         }
                         .buttonStyle(
                             .borderedProminent
@@ -560,6 +756,7 @@ struct ParentDashboardView: View {
                     }
                     .padding()
                 }
+
             } else {
 
                 ContentUnavailableView(
@@ -575,6 +772,7 @@ struct ParentDashboardView: View {
         .sheet(
             isPresented: $showingAddChild
         ) {
+
             AddStudentView()
                 .environmentObject(dataManager)
                 .environmentObject(authManager)
@@ -588,49 +786,102 @@ struct ParentDashboardView: View {
         _ child: Student
     ) -> some View {
 
-        HStack(spacing: 12) {
+        VStack(
+            alignment: .leading,
+            spacing: 10
+        ) {
 
-            ProfileAvatarView(
-                name: child.name,
-                photoURL: child.photoURL,
-                size: 50
-            )
+            HStack(spacing: 12) {
 
-            VStack(
-                alignment: .leading,
-                spacing: 4
-            ) {
+                ProfileAvatarView(
+                    name: child.name,
+                    photoURL: child.photoURL,
+                    size: 50
+                )
 
-                Text(child.name)
-                    .font(.headline)
+                VStack(
+                    alignment: .leading,
+                    spacing: 4
+                ) {
+
+                    Text(child.name)
+                        .font(.headline)
+                        .foregroundStyle(
+                            SafeRiderTheme.primaryText
+                        )
+
+                    Text(
+                        "Grade \(child.grade) • "
+                        + "Section \(child.section)"
+                    )
+                    .font(.subheadline)
                     .foregroundStyle(
-                        SafeRiderTheme.primaryText
+                        SafeRiderTheme.secondaryText
                     )
 
-                Text(
-                    "Grade \(child.grade) • "
-                    + "Section \(child.section)"
+                    if !child.school.isEmpty {
+
+                        Text(child.school)
+                            .font(.caption)
+                            .foregroundStyle(
+                                SafeRiderTheme.secondaryText
+                            )
+                    }
+                }
+
+                Spacer()
+
+                Image(
+                    systemName: "chevron.right"
                 )
-                .font(.subheadline)
                 .foregroundStyle(
                     SafeRiderTheme.secondaryText
                 )
-
-                if !child.school.isEmpty {
-                    Text(child.school)
-                        .font(.caption)
-                        .foregroundStyle(
-                            SafeRiderTheme.secondaryText
-                        )
-                }
             }
 
-            Spacer()
+            Divider()
 
-            Image(systemName: "chevron.right")
+            // MARK: Schedule Shortcut
+
+            NavigationLink {
+
+                ParentTransportationScheduleView(student: child)
+
+            } label: {
+
+                HStack {
+
+                    Image(
+                        systemName:
+                            "calendar.badge.clock"
+                    )
+                    .foregroundStyle(
+                        SafeRiderTheme.orange
+                    )
+
+                    Text(
+                        transportationSchedule(
+                            for: child
+                        ) == nil
+                        ? "Set Transportation Schedule"
+                        : "Manage Transportation Schedule"
+                    )
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
+                    Spacer()
+
+                    Image(
+                        systemName:
+                            "chevron.right"
+                    )
+                    .font(.caption)
+                }
                 .foregroundStyle(
-                    SafeRiderTheme.secondaryText
+                    SafeRiderTheme.primaryText
                 )
+            }
+            .buttonStyle(.plain)
         }
         .padding()
         .background(
@@ -642,14 +893,14 @@ struct ParentDashboardView: View {
             )
         )
     }
-    
 
     // MARK: - Payments
 
     @ViewBuilder
     private var parentPaymentsView: some View {
 
-        if let parent = dataManager.currentParent {
+        if let parent =
+            dataManager.currentParent {
 
             PaymentsView(
                 parentOnly: parent.id
@@ -672,7 +923,8 @@ struct ParentDashboardView: View {
     @ViewBuilder
     private var parentProfileTab: some View {
 
-        if let parent = dataManager.currentParent {
+        if let parent =
+            dataManager.currentParent {
 
             ParentProfileView(
                 parent: parent
