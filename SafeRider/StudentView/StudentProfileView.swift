@@ -94,6 +94,12 @@ struct StudentProfileView: View {
                     LabeledContent("Section") {
                         Text(student.section)
                     }
+                    
+                    addressRow(
+                                title: "Home Address",
+                                icon: "house.fill",
+                                address: student.homeAddress
+                            )
                 }
 
                 // MARK: - School Information
@@ -106,6 +112,11 @@ struct StudentProfileView: View {
                                 : student.school
                         )
                     }
+                    addressRow(
+                                title: "School Address",
+                                icon: "building.2.fill",
+                                address: student.schoolAddress
+                            )
 
                     LabeledContent("Teacher") {
                         Text(
@@ -121,6 +132,7 @@ struct StudentProfileView: View {
                         }
                     }
                 }
+                
 
                 // MARK: - Transportation
 
@@ -231,6 +243,53 @@ struct StudentProfileView: View {
                 message: Text(message.text),
                 dismissButton: .default(Text("OK"))
             )
+        }
+    }
+    
+    private func addressRow(
+        title: String,
+        icon: String,
+        address: String
+    ) -> some View {
+        HStack(
+            alignment: .top,
+            spacing: 12
+        ) {
+            Image(systemName: icon)
+                .foregroundStyle(
+                    SafeRiderTheme.orange
+                )
+                .frame(width: 24)
+
+            VStack(
+                alignment: .leading,
+                spacing: 4
+            ) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(
+                        SafeRiderTheme.primaryText
+                    )
+
+                if address.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ).isEmpty {
+                    Text("Not configured")
+                        .font(.caption)
+                        .foregroundStyle(
+                            SafeRiderTheme.secondaryText
+                        )
+                } else {
+                    Text(address)
+                        .font(.subheadline)
+                        .foregroundStyle(
+                            SafeRiderTheme.secondaryText
+                        )
+                }
+            }
+
+            Spacer()
         }
     }
 

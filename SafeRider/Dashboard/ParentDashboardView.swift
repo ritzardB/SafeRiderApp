@@ -48,7 +48,7 @@ struct ParentDashboardView: View {
             }
             .tabItem {
                 Label(
-                    "Manage Children",
+                    "Children",
                     systemImage: "person.2.fill"
                 )
             }
@@ -318,7 +318,7 @@ struct ParentDashboardView: View {
             spacing: 12
         ) {
 
-            // MARK: Child Information
+            // MARK: - Child Information
 
             HStack(spacing: 12) {
 
@@ -354,11 +354,11 @@ struct ParentDashboardView: View {
 
             Divider()
 
-            // MARK: Schedule Status
+            // MARK: - Schedule Status
 
             if let schedule {
 
-                // MARK: Morning Pickup
+                // Morning Pickup
 
                 if let morningTime =
                     schedule.morningPickupTime {
@@ -367,8 +367,7 @@ struct ParentDashboardView: View {
 
                         Label(
                             "Morning Pickup",
-                            systemImage:
-                                "sunrise.fill"
+                            systemImage: "sunrise.fill"
                         )
                         .foregroundStyle(
                             SafeRiderTheme.primaryText
@@ -388,7 +387,7 @@ struct ParentDashboardView: View {
                     }
                 }
 
-                // MARK: Afternoon Pickup
+                // Afternoon Pickup
 
                 if let afternoonTime =
                     schedule.afternoonPickupTime {
@@ -397,8 +396,7 @@ struct ParentDashboardView: View {
 
                         Label(
                             "Afternoon Pickup",
-                            systemImage:
-                                "sunset.fill"
+                            systemImage: "sunset.fill"
                         )
                         .foregroundStyle(
                             SafeRiderTheme.primaryText
@@ -418,7 +416,7 @@ struct ParentDashboardView: View {
                     }
                 }
 
-                // MARK: Active Status
+                // Active Status
 
                 HStack {
 
@@ -434,109 +432,83 @@ struct ParentDashboardView: View {
                     .font(.caption)
                     .foregroundStyle(
                         schedule.isActive
-                        ? SafeRiderTheme.success
-                        : SafeRiderTheme.secondaryText
+                            ? SafeRiderTheme.success
+                            : SafeRiderTheme.secondaryText
                     )
 
                     Spacer()
                 }
 
-                // MARK: Manage Schedule
-
-                NavigationLink {
-
-                    ParentTransportationScheduleView()
-
-                } label: {
-
-                    Label(
-                        "Manage Schedule",
-                        systemImage:
-                            "calendar.badge.clock"
-                    )
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .tint(SafeRiderTheme.orange)
-
             } else {
 
-                // MARK: No Schedule
+                // No Schedule
 
-                VStack(
-                    alignment: .leading,
-                    spacing: 8
-                ) {
+                HStack(spacing: 8) {
 
-                    HStack(spacing: 8) {
-
-                        Image(
-                            systemName:
-                                "calendar.badge.exclamationmark"
-                        )
-                        .foregroundStyle(
-                            SafeRiderTheme.orange
-                        )
-
-                        Text(
-                            "Transportation schedule not configured"
-                        )
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(
-                            SafeRiderTheme.primaryText
-                        )
-                    }
+                    Image(
+                        systemName:
+                            "calendar.badge.exclamationmark"
+                    )
+                    .foregroundStyle(
+                        SafeRiderTheme.orange
+                    )
 
                     Text(
-                        "Set pickup times and locations "
-                        + "for \(child.name)."
+                        "Transportation schedule not configured"
+                    )
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(
+                        SafeRiderTheme.primaryText
+                    )
+                }
+            }
+
+            Divider()
+
+            // MARK: - Transportation Schedule
+
+            NavigationLink {
+
+                ParentTransportationScheduleView(
+                    student: child
+                )
+
+            } label: {
+
+                HStack {
+
+                    Image(
+                        systemName:
+                            "calendar.badge.clock"
+                    )
+                    .foregroundStyle(
+                        SafeRiderTheme.orange
+                    )
+
+                    Text(
+                        schedule == nil
+                            ? "Set Transportation Schedule"
+                            : "Manage Transportation Schedule"
+                    )
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
+                    Spacer()
+
+                    Image(
+                        systemName: "chevron.right"
                     )
                     .font(.caption)
                     .foregroundStyle(
                         SafeRiderTheme.secondaryText
                     )
-
-                    NavigationLink {
-
-                        ParentTransportationScheduleView(student: child)
-
-                    } label: {
-
-                        Label(
-                            "Set Schedule",
-                            systemImage:
-                                "calendar.badge.plus"
-                        )
-                        .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(
-                        .borderedProminent
-                    )
-                    .tint(
-                        SafeRiderTheme.orange
-                    )
                 }
+                .foregroundStyle(
+                    SafeRiderTheme.primaryText
+                )
             }
-
-            // MARK: Tracking
-
-//            NavigationLink {
-//
-//                ParentTrackingView(
-//                    student: child
-//                )
-//
-//            } label: {
-//
-//                Label(
-//                    "View Tracking",
-//                    systemImage: "location.fill"
-//                )
-//                .frame(maxWidth: .infinity)
-//            }
-//            .buttonStyle(.bordered)
-//            .tint(SafeRiderTheme.blue)
+            .buttonStyle(.plain)
         }
         .padding()
         .background(

@@ -1063,6 +1063,8 @@ struct TransportationTrackingView: View {
             spacing: 12
         ) {
 
+            // MARK: - Header
+
             HStack {
 
                 Text("Live GPS")
@@ -1110,6 +1112,19 @@ struct TransportationTrackingView: View {
                 }
             }
 
+            // MARK: - Map
+
+            SafeRiderMapView(
+                homeAddress:
+                    transportationSchedule?.homeLocation ?? "",
+                schoolAddress:
+                    transportationSchedule?.schoolLocation ?? "",
+                driverLatitude:
+                    liveLatitude,
+                driverLongitude:
+                    liveLongitude
+            )
+            
             VStack(spacing: 14) {
 
                 ZStack {

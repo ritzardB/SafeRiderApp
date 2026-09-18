@@ -51,6 +51,16 @@ struct Student: Identifiable, Codable {
     var school: String
     
     var photoURL: String? = nil
+    
+    // MARK: - Student Locations
+
+    var homeAddress: String = ""
+    var homeLatitude: Double?
+    var homeLongitude: Double?
+
+    var schoolAddress: String = ""
+    var schoolLatitude: Double?
+    var schoolLongitude: Double?
 }
 
 struct School: Identifiable, Codable {
@@ -123,9 +133,13 @@ struct TransportationSchedule: Identifiable, Codable {
     var pickupLocation: String = ""
     var schoolLocation: String = ""
     var homeLocation: String = ""
+    
+    // Location customization
+    var isCustomPickupLocation: Bool = false
+    var isCustomSchoolLocation: Bool = false
+    var isCustomDropoffLocation: Bool = false
 
     var isActive: Bool = true
-
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
 }

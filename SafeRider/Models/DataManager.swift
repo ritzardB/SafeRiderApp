@@ -1170,17 +1170,28 @@ final class DataManager: ObservableObject {
     // MARK: - Transportation Schedule
     
     func saveTransportationSchedule(_ schedule: TransportationSchedule) {
+        print("📅 DataManager received weekdays:", schedule.weekdays)
         let data: [String: Any] = [
             "id": schedule.id.uuidString,
             "parentId": schedule.parentId.uuidString,
             "driverId": schedule.driverId.uuidString,
             "studentId": schedule.studentId.uuidString,
             "weekdays": schedule.weekdays,
+
             "pickupLocation": schedule.pickupLocation,
             "schoolLocation": schedule.schoolLocation,
             "homeLocation": schedule.homeLocation,
+
+            "isCustomPickupLocation": schedule.isCustomPickupLocation,
+            "isCustomSchoolLocation": schedule.isCustomSchoolLocation,
+            "isCustomDropoffLocation": schedule.isCustomDropoffLocation,
+
             "isActive": schedule.isActive,
-            "createdAt": Timestamp(date: validFirestoreDate(schedule.createdAt)),
+
+            "createdAt": Timestamp(
+                date: validFirestoreDate(schedule.createdAt)
+            ),
+
             "updatedAt": Timestamp(date: Date())
         ]
         
@@ -1594,8 +1605,11 @@ final class DataManager: ObservableObject {
             "teacherPhone":
                 s.teacherPhone,
             "school": s.school,
+            "homeAddress": s.homeAddress,
+            "schoolAddress": s.schoolAddress,
             "updatedAt":
                 FieldValue.serverTimestamp()
+       
         ]
         
         if let parentId = s.parentId {
@@ -1635,6 +1649,21 @@ final class DataManager: ObservableObject {
         {
             data["photoURL"] =
             photoURL
+        }
+        if let latitude = s.homeLatitude {
+            data["homeLatitude"] = latitude
+        }
+
+        if let longitude = s.homeLongitude {
+            data["homeLongitude"] = longitude
+        }
+
+        if let latitude = s.schoolLatitude {
+            data["schoolLatitude"] = latitude
+        }
+
+        if let longitude = s.schoolLongitude {
+            data["schoolLongitude"] = longitude
         }
         
         return data
@@ -1686,8 +1715,47 @@ final class DataManager: ObservableObject {
             photoURL: string(
                 data,
                 "photoURL"
+            ),
+            
+            homeAddress: string(data, "homeAddress") ?? "",
+            
+            homeLatitude: doubleOptional(
+                data,
+                "homeLatitude"
+            ),
+            
+            homeLongitude: doubleOptional(
+                data,
+                "homeLongitude"
+            ),
+            
+            schoolAddress: string(data, "schoolAddress") ?? "",
+
+            schoolLatitude: doubleOptional(
+                data,
+                "schoolLatitude"
+            ),
+
+            schoolLongitude: doubleOptional(
+                data,
+                "schoolLongitude"
             )
         )
+    }
+    
+    private func doubleOptional(
+        _ data: [String: Any],
+        _ key: String
+    ) -> Double? {
+        if let value = data[key] as? Double {
+            return value
+        }
+
+        if let value = data[key] as? NSNumber {
+            return value.doubleValue
+        }
+
+        return nil
     }
     
     // MARK: - Ride Mapping
@@ -2054,34 +2122,52 @@ final class DataManager: ObservableObject {
             parentId: parentId,
             studentId: studentId,
             driverId: driverId,
+
             weekdays: data["weekdays"] as? [Int]
-            ?? [2, 3, 4, 5, 6],
+                ?? [2, 3, 4, 5, 6],
+
             morningPickupTime: date(
                 data,
                 "morningPickupTime"
             ),
+
             afternoonPickupTime: date(
                 data,
                 "afternoonPickupTime"
             ),
+
             pickupLocation: string(
                 data,
                 "pickupLocation"
             ) ?? "",
+
             schoolLocation: string(
                 data,
                 "schoolLocation"
             ) ?? "",
+
             homeLocation: string(
                 data,
                 "homeLocation"
             ) ?? "",
+
+            isCustomPickupLocation:
+                data["isCustomPickupLocation"] as? Bool ?? false,
+
+            isCustomSchoolLocation:
+                data["isCustomSchoolLocation"] as? Bool ?? false,
+
+            isCustomDropoffLocation:
+                data["isCustomDropoffLocation"] as? Bool ?? false,
+
             isActive: data["isActive"] as? Bool ?? true,
+
             createdAt: date(
                 data,
                 "createdAt",
                 fallback: Date()
             ),
+
             updatedAt: date(
                 data,
                 "updatedAt",

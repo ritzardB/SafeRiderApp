@@ -23,6 +23,7 @@ struct SafeRiderApp: App {
             RootView()
                 .environmentObject(authManager)
                 .environmentObject(dataManager)
+                .preferredColorScheme(.light)
         }
     }
 }

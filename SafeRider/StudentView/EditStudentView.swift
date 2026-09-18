@@ -1,98 +1,151 @@
 import SwiftUI
-import PhotosUI
 
 struct EditStudentView: View {
     @EnvironmentObject private var dataManager: DataManager
     @Environment(\.dismiss) private var dismiss
-    
+
     let student: Student
+
     @State private var name: String
     @State private var grade: String
     @State private var section: String
     @State private var school: String
     @State private var teacherPhone: String
     @State private var teacherName: String
-    @State private var parentId: UUID?
-    @State private var driverId: UUID?
-    @State private var notificationMessage: NotificationMessage?
-    @State private var showingEditStudent = false
-    
+
+    @State private var homeAddress: String
+    @State private var schoolAddress: String
+
     init(student: Student) {
         self.student = student
-        _name = State(initialValue: student.name)
-        _grade = State(initialValue: student.grade)
-        _section = State(initialValue: student.section)
-        _school = State(initialValue: student.school)
-        _teacherPhone = State(initialValue: student.teacherPhone)
-        _teacherName = State(initialValue: student.teacherName)
-        _parentId = State(initialValue: student.parentId)
-        _driverId = State(initialValue: student.driverId)
+
+        _name = State(
+            initialValue: student.name
+        )
+
+        _grade = State(
+            initialValue: student.grade
+        )
+
+        _section = State(
+            initialValue: student.section
+        )
+
+        _school = State(
+            initialValue: student.school
+        )
+
+        _teacherPhone = State(
+            initialValue: student.teacherPhone
+        )
+
+        _teacherName = State(
+            initialValue: student.teacherName
+        )
+
+        _homeAddress = State(
+            initialValue: student.homeAddress
+        )
+
+        _schoolAddress = State(
+            initialValue: student.schoolAddress
+        )
     }
-    
+
     var body: some View {
         Form {
-            Section("Student Info") {
-                TextField("Name", text: $name)
-                TextField("Grade", text: $grade)
-                TextField("Section", text: $section)
-                TextField("Teacher's Name", text: $teacherName)
-                TextField("Teacher's Phone", text: $teacherPhone)
-                TextField("School", text: $school)
+            // MARK: - Student Information
+
+            Section("Student Information") {
+                TextField(
+                    "Name",
+                    text: $name
+                )
+
+                TextField(
+                    "Grade",
+                    text: $grade
+                )
+
+                TextField(
+                    "Section",
+                    text: $section
+                )
             }
-            
-            Section("Assign to Parent") {
-                Picker("Parent", selection: $parentId) {
-                    Text("Unassigned").tag(nil as UUID?)
-                    ForEach(dataManager.parents) { parent in
-                        Text(parent.motherName.isEmpty ? parent.email : parent.motherName)
-                            .tag(parent.id as UUID?)
-                    }
-                }
+
+            // MARK: - School Information
+
+            Section("School Information") {
+                TextField(
+                    "School Name",
+                    text: $school
+                )
+
+                TextField(
+                    "Teacher's Name",
+                    text: $teacherName
+                )
+
+                TextField(
+                    "Teacher's Phone",
+                    text: $teacherPhone
+                )
+                .keyboardType(.phonePad)
             }
-            
-            Section("Assign to Driver") {
-                Picker("Driver", selection: $driverId) {
-                    Text("Unassigned").tag(nil as UUID?)
-                    ForEach(dataManager.drivers) { driver in
-                        Text(driver.name).tag(driver.id as UUID?)
-                    }
-                }
-            }
-        }
-        .navigationTitle(student.name)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showingEditStudent = true
-                } label: {
+
+            // MARK: - Student Addresses
+
+            Section {
+                VStack(
+                    alignment: .leading,
+                    spacing: 6
+                ) {
                     Label(
-                        "Edit",
-                        systemImage: "pencil"
+                        "Home Address",
+                        systemImage: "house.fill"
                     )
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
+                    TextField(
+                        "Enter home address",
+                        text: $homeAddress,
+                        axis: .vertical
+                    )
+                    .lineLimit(2...4)
                 }
-                .foregroundStyle(
-                    SafeRiderTheme.orange
+
+                VStack(
+                    alignment: .leading,
+                    spacing: 6
+                ) {
+                    Label(
+                        "School Address",
+                        systemImage: "building.2.fill"
+                    )
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
+                    TextField(
+                        "Enter school address",
+                        text: $schoolAddress,
+                        axis: .vertical
+                    )
+                    .lineLimit(2...4)
+                }
+            } header: {
+                Text("Addresses")
+            } footer: {
+                Text(
+                    "These addresses are used as the student's "
+                    + "default transportation locations. "
+                    + "Custom pickup or drop-off locations "
+                    + "can be configured separately."
                 )
             }
         }
-        .sheet(isPresented: $showingEditStudent) {
-            NavigationStack {
-                EditStudentView(student: student)
-                    .environmentObject(dataManager)
-            }
-        }
-        
-        .alert(item: $notificationMessage) { message in
-            Alert(
-                title: Text("Ride Updated"),
-                message: Text(message.text),
-                dismissButton: .default(
-                    Text("OK")
-                )
-            )
-        }
-        
+        .navigationTitle("Edit Student")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(
                 placement: .cancellationAction
@@ -101,64 +154,72 @@ struct EditStudentView: View {
                     dismiss()
                 }
             }
-            
+
             ToolbarItem(
                 placement: .confirmationAction
             ) {
                 Button("Save") {
-                    dataManager.updateStudent(
-                        Student(
-                            id: student.id,
-                            name: name,
-                            grade: grade,
-                            section: section,
-                            teacherName: teacherName,
-                            teacherPhone: teacherPhone,
-                            parentId: parentId,
-                            driverId: driverId,
-                            school: school,
-                            photoURL: student.photoURL
-                        )
-                    )
-                    
-                    dismiss()
+                    saveStudent()
                 }
+                .fontWeight(.semibold)
             }
         }
     }
+
     // MARK: - Save
-        
-        private func saveStudent() {
-            
-            let updatedStudent = Student(
-                id: student.id,
-                name: name.trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                ),
-                grade: grade.trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                ),
-                section: section.trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                ),
-                teacherName: teacherName.trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                ),
-                teacherPhone: teacherPhone.trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                ),
-                parentId: student.parentId,
-                driverId: student.driverId,
-                school: school.trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                ),
-                photoURL: student.photoURL
-            )
-            
-            dataManager.updateStudent(
-                updatedStudent
-            )
-            
-            dismiss()
-        }
+
+    private func saveStudent() {
+        let updatedStudent = Student(
+            id: student.id,
+
+            name: name.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            ),
+
+            grade: grade.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            ),
+
+            section: section.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            ),
+
+            teacherName: teacherName.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            ),
+
+            teacherPhone: teacherPhone.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            ),
+
+            parentId: student.parentId,
+            driverId: student.driverId,
+
+            school: school.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            ),
+
+            photoURL: student.photoURL,
+
+            homeAddress: homeAddress.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            ),
+
+            homeLatitude: student.homeLatitude,
+            homeLongitude: student.homeLongitude,
+
+            schoolAddress: schoolAddress.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            ),
+
+            schoolLatitude: student.schoolLatitude,
+            schoolLongitude: student.schoolLongitude
+        )
+
+        dataManager.updateStudent(
+            updatedStudent
+        )
+
+        dismiss()
     }
+}
