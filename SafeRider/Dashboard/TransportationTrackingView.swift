@@ -1081,35 +1081,33 @@ struct TransportationTrackingView: View {
                 Spacer()
 
                 HStack(spacing: 6) {
-
                     Circle()
-                        .fill(
-                            liveLatitude != nil
-                            ? SafeRiderTheme.success
-                            : SafeRiderTheme.secondaryText
-                        )
-                        .frame(
-                            width: 8,
-                            height: 8
-                        )
+                        .fill(liveLocationStatusColor)
+                        .frame(width: 8, height: 8)
 
-                    Text(
-                        liveLatitude != nil
-                        ? "LIVE"
-                        : "OFFLINE"
-                    )
-                    .font(
-                        .system(
-                            size: 10,
-                            weight: .bold
-                        )
-                    )
-                    .foregroundStyle(
-                        liveLatitude != nil
-                        ? SafeRiderTheme.success
-                        : SafeRiderTheme.secondaryText
-                    )
+                    Text(liveLocationStatus)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(liveLocationStatusColor)
                 }
+                
+                HStack(spacing: 16) {
+                    Label(
+                        liveLocationLastUpdated,
+                        systemImage: "clock.fill"
+                    )
+
+                    if let accuracy = liveAccuracy {
+                        Label(
+                            String(
+                                format: "±%.0f m",
+                                accuracy
+                            ),
+                            systemImage: "location.fill"
+                        )
+                    }
+                }
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(SafeRiderTheme.secondaryText)
             }
 
             // MARK: - Map
@@ -1252,6 +1250,60 @@ struct TransportationTrackingView: View {
             )
         }
     }
+    
+    
+
+    private var liveLocationLastUpdated: String {
+        guard let updatedAt = liveUpdatedAt else {
+            return "Waiting for driver location..."
+        }
+
+        let seconds = max(
+            0,
+            Int(Date().timeIntervalSince(updatedAt))
+        )
+
+        if seconds < 60 {
+            return "Updated \(seconds)s ago"
+        }
+
+        let minutes = seconds / 60
+
+        if minutes == 1 {
+            return "Updated 1 minute ago"
+        }
+
+        return "Updated \(minutes) minutes ago"
+    }
+    private var liveLocationStatus: String {
+        guard let updatedAt = liveUpdatedAt else {
+            return "OFFLINE"
+        }
+
+        let age = Date().timeIntervalSince(updatedAt)
+
+        if age <= 30 {
+            return "LIVE"
+        } else if age <= 120 {
+            return "STALE"
+        } else {
+            return "OFFLINE"
+        }
+    }
+    
+    private var liveLocationStatusColor: Color {
+        switch liveLocationStatus {
+        case "LIVE":
+            return SafeRiderTheme.success
+
+        case "STALE":
+            return SafeRiderTheme.orange
+
+        default:
+            return SafeRiderTheme.secondaryText
+        }
+    }
+    
 
     // MARK: - Firestore Ride Listener
 

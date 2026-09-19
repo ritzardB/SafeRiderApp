@@ -29,17 +29,47 @@ struct SafeRiderApp: App {
 }
 
 private struct RootView: View {
+
     @EnvironmentObject private var authManager: AuthManager
     @EnvironmentObject private var dataManager: DataManager
 
+    @State private var showHero = true
+
     var body: some View {
-        Group {
-            if authManager.isLoading {
-                ProgressView("Loading SafeRider…")
-            } else if let role = authManager.userRole {
-                dashboard(for: role)
+
+        ZStack {
+
+            if showHero {
+
+                SafeRiderHeroSplash {
+
+                    withAnimation(
+                        .easeInOut(duration: 0.35)
+                    ) {
+                        showHero = false
+                    }
+                }
+
             } else {
-                LoginView()
+
+                Group {
+
+                    if authManager.isLoading {
+
+                        ProgressView(
+                            "Loading SafeRider…"
+                        )
+
+                    } else if let role =
+                        authManager.userRole {
+
+                        dashboard(for: role)
+
+                    } else {
+
+                        LoginView()
+                    }
+                }
             }
         }
         .task(id: authManager.user?.uid) {
@@ -51,20 +81,41 @@ private struct RootView: View {
     }
 
     private func syncSession() {
-        guard let user = authManager.user, let role = authManager.userRole else {
-            dataManager.syncAuthenticatedUser(uid: nil, email: nil, role: nil)
+
+        guard
+            let user = authManager.user,
+            let role = authManager.userRole
+        else {
+
+            dataManager.syncAuthenticatedUser(
+                uid: nil,
+                email: nil,
+                role: nil
+            )
+
             return
         }
-        dataManager.syncAuthenticatedUser(uid: user.uid, email: user.email, role: role)
+
+        dataManager.syncAuthenticatedUser(
+            uid: user.uid,
+            email: user.email,
+            role: role
+        )
     }
 
     @ViewBuilder
-    private func dashboard(for role: UserRole) -> some View {
+    private func dashboard(
+        for role: UserRole
+    ) -> some View {
+
         switch role {
+
         case .parent:
             ParentDashboardView()
+
         case .driver:
             DriverDashboardView()
+
         case .admin:
             AdminDashboardView()
         }
