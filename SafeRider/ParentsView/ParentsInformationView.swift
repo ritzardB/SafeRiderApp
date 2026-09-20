@@ -1,18 +1,22 @@
 import SwiftUI
 
 struct ParentsInformationView: View {
+
     @EnvironmentObject private var dataManager: DataManager
 
     var body: some View {
         List(uniqueParents) { parent in
+
             let children = dataManager.students(for: parent)
 
             Section {
-                VStack(alignment: .leading, spacing: 10) {
 
-                    // MARK: Parent
+                VStack(alignment: .leading, spacing: 12) {
+
+                    // MARK: - Parent Information
 
                     HStack(spacing: 12) {
+
                         ProfileAvatarView(
                             name: parent.motherName.isEmpty
                                 ? parent.fatherName
@@ -21,7 +25,8 @@ struct ParentsInformationView: View {
                             size: 56
                         )
 
-                        VStack(alignment: .leading, spacing: 3) {
+                        VStack(alignment: .leading, spacing: 4) {
+
                             Text(parentDisplayName(parent))
                                 .font(.headline)
 
@@ -35,13 +40,14 @@ struct ParentsInformationView: View {
 
                     Divider()
 
-                    // MARK: Parent Details
+                    // MARK: - Parent Details
 
                     if !parent.fatherName.isEmpty {
                         Label(
                             "Father: \(parent.fatherName)",
                             systemImage: "person"
                         )
+                        .foregroundStyle(.primary)
                     }
 
                     if !parent.contactNumber.isEmpty {
@@ -49,45 +55,60 @@ struct ParentsInformationView: View {
                             parent.contactNumber,
                             systemImage: "phone"
                         )
+                        .foregroundStyle(.primary)
                     }
 
-                    // MARK: Children
+                    // MARK: - Children
 
                     if children.isEmpty {
-                        Text("No children assigned")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 4)
+
+                        Label(
+                            "No children assigned",
+                            systemImage: "info.circle"
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 4)
+
                     } else {
-                        VStack(alignment: .leading, spacing: 8) {
+
+                        VStack(
+                            alignment: .leading,
+                            spacing: 10
+                        ) {
+
                             Text("Children (\(children.count))")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
+                                .foregroundStyle(.orange)
                                 .padding(.top, 4)
 
                             ForEach(children) { child in
+
                                 NavigationLink {
                                     StudentProfileView(student: child)
                                 } label: {
+
                                     HStack(spacing: 12) {
-                                        Image(systemName: "person.fill")
-                                            .font(.title3)
-                                            .foregroundStyle(.blue)
-                                            .frame(
-                                                width: 36,
-                                                height: 36
-                                            )
-                                            .background(
-                                                Circle()
-                                                    .fill(.blue.opacity(0.1))
-                                            )
+
+                                        // Child Profile Photo
+
+                                        ProfileAvatarView(
+                                            name: child.name,
+                                            photoURL: child.photoURL,
+                                            size: 44
+                                        )
+
+                                        // Child Details
 
                                         VStack(
                                             alignment: .leading,
                                             spacing: 3
                                         ) {
+
                                             Text(child.name)
                                                 .font(.headline)
+                                                .foregroundStyle(.primary)
 
                                             Text(
                                                 "Grade \(child.grade) - "
@@ -105,23 +126,30 @@ struct ParentsInformationView: View {
                                             }
                                         }
 
-                                        Spacer()
+                                        Spacer(minLength: 4)
                                     }
-                                    .padding(.vertical, 4)
+                                    .padding(.vertical, 5)
+                                    .contentShape(Rectangle())
                                 }
+                                .tint(.orange)
                             }
                         }
                     }
                 }
-                .padding(.vertical, 6)
+                .padding(.vertical, 8)
             }
         }
         .navigationTitle("Parent's Information")
+        .navigationBarTitleDisplayMode(.inline)
+        .tint(.orange)
+        .scrollContentBackground(.hidden)
+        .background(Color.orange.opacity(0.10))
     }
 
     // MARK: - Unique Parents
 
     private var uniqueParents: [Parent] {
+
         var seen = Set<UUID>()
 
         return dataManager.parents.filter { parent in
@@ -132,6 +160,7 @@ struct ParentsInformationView: View {
     // MARK: - Parent Display Name
 
     private func parentDisplayName(_ parent: Parent) -> String {
+
         if !parent.motherName.isEmpty {
             return parent.motherName
         }

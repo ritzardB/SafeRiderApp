@@ -18,6 +18,8 @@ struct TrackingView: View {
     @State private var isStartingRide = false
     @State private var alertMessage: String?
     @State private var showAlert = false
+    @State private var isUpdatingStatus = false
+    @State private var showEndRideConfirmation = false
 
     // MARK: - Driver
 
@@ -183,6 +185,30 @@ struct TrackingView: View {
             Button("OK") { }
         } message: {
             Text(alertMessage ?? "")
+        }
+    }
+    
+    // MARK: - Next Available Transportation Action
+
+    private var nextActionStatus: RideStatus? {
+        switch rideStatus {
+        case .scheduled:
+            return .driverEnRoute
+
+        case .driverEnRoute:
+            return .pickedUp
+
+        case .pickedUp:
+            return .droppedAtSchool
+
+        case .droppedAtSchool:
+            return .returning
+
+        case .returning:
+            return .arrivedHome
+
+        case .arrivedHome, .cancelled:
+            return nil
         }
     }
 
@@ -651,53 +677,53 @@ struct TrackingView: View {
 
                 LazyVGrid(
                     columns: [
-                        GridItem(
-                            .flexible(),
-                            spacing: 12
-                        ),
-                        GridItem(
-                            .flexible(),
-                            spacing: 12
-                        )
+                        GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12)
                     ],
                     spacing: 12
                 ) {
-
                     transportationAction(
                         icon: "car.fill",
                         title: "En Route",
                         status: .driverEnRoute
                     )
-
+                    
                     transportationAction(
                         icon: "person.fill",
                         title: "Picked Up",
                         status: .pickedUp
                     )
-
+                    
                     transportationAction(
                         icon: "building.2.fill",
                         title: "At School",
                         status: .droppedAtSchool
                     )
-
+                    
                     transportationAction(
                         icon: "arrow.uturn.left.circle.fill",
                         title: "Returning",
                         status: .returning
                     )
-
-                    transportationAction(
-                        icon: "house.fill",
-                        title: "Arrived Home",
-                        status: .arrivedHome
-                    )
-
-                    stopRideAction
                 }
+
+                // Full-width Arrived Home button
+                transportationAction(
+                    icon: "house.fill",
+                    title: "Arrived Home",
+                    status: .arrivedHome
+                )
+                .frame(maxWidth: .infinity)
+
+                // Full-width Stop Ride button
+                stopRideAction
+                    .frame(maxWidth: .infinity)
+                
             }
         }
     }
+
+    // MARK: - Transportation Action
 
     private func transportationAction(
         icon: String,
@@ -705,18 +731,16 @@ struct TrackingView: View {
         status: RideStatus
     ) -> some View {
 
-        let isCurrent =
-            rideStatus == status
+        let isActive = nextActionStatus == status
 
         return Button {
-            updateTransportationStatus(
-                status
-            )
+            guard isActive else { return }
+
+            updateTransportationStatus(status)
+
         } label: {
 
-            VStack(
-                spacing: 10
-            ) {
+            VStack(spacing: 10) {
 
                 Image(systemName: icon)
                     .font(
@@ -726,9 +750,9 @@ struct TrackingView: View {
                         )
                     )
                     .foregroundStyle(
-                        isCurrent
+                        isActive
                             ? .white
-                            : SafeRiderTheme.orange
+                            : Color.gray
                     )
 
                 Text(title)
@@ -739,16 +763,14 @@ struct TrackingView: View {
                         )
                     )
                     .foregroundStyle(
-                        isCurrent
+                        isActive
                             ? .white
-                            : SafeRiderTheme.primaryText
+                            : Color.gray
                     )
-                    .multilineTextAlignment(
-                        .center
-                    )
+                    .multilineTextAlignment(.center)
 
-                if isCurrent {
-                    Text("CURRENT")
+                if isActive {
+                    Text("NEXT ACTION")
                         .font(
                             .system(
                                 size: 9,
@@ -764,9 +786,9 @@ struct TrackingView: View {
             )
             .padding(10)
             .background(
-                isCurrent
+                isActive
                     ? SafeRiderTheme.orange
-                    : SafeRiderTheme.surface
+                    : Color.gray.opacity(0.15)
             )
             .clipShape(
                 RoundedRectangle(
@@ -775,54 +797,70 @@ struct TrackingView: View {
             )
         }
         .buttonStyle(.plain)
+        .disabled(!isActive)
     }
 
     private var stopRideAction: some View {
         Button {
-            stopTransportation()
+            showEndRideConfirmation = true
         } label: {
-
-            VStack(spacing: 10) {
-
-                Image(
-                    systemName: "stop.circle.fill"
-                )
-                .font(
-                    .system(
-                        size: 27,
-                        weight: .semibold
-                    )
-                )
-                .foregroundStyle(
-                    SafeRiderTheme.danger
-                )
-
-                Text("Stop Ride")
-                    .font(
-                        .system(
-                            size: 13,
-                            weight: .semibold
-                        )
-                    )
-                    .foregroundStyle(
-                        SafeRiderTheme.primaryText
-                    )
-            }
-            .frame(
-                maxWidth: .infinity,
-                minHeight: 105
-            )
-            .padding(10)
-            .background(
-                SafeRiderTheme.surface
-            )
-            .clipShape(
-                RoundedRectangle(
-                    cornerRadius: 16
-                )
-            )
+            // Keep your existing Stop Ride button design.
         }
         .buttonStyle(.plain)
+        .confirmationDialog(
+            "End Transportation?",
+            isPresented: $showEndRideConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("End Ride", role: .destructive) {
+                endTransportation()
+            }
+
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(
+                "Are you sure you want to end this transportation session? "
+                + "This will mark the ride as completed, stop live GPS tracking, "
+                + "and remove the driver's active transportation status."
+            )
+        }
+    }
+    
+    // MARK: - End Transportation
+
+    private func endTransportation() {
+        guard
+            let rideID = activeRideID,
+            let student = selectedStudent,
+            let driver
+        else {
+            showError("No active transportation session was found.")
+            return
+        }
+
+        // Prevent duplicate completion attempts.
+        guard !isUpdatingStatus else {
+            return
+        }
+
+        isUpdatingStatus = true
+
+        // Mark the ride as completed.
+        _ = dataManager.updateTodayRide(
+            studentId: student.id,
+            driverId: driver.id,
+            status: .arrivedHome
+        )
+
+        // Stop GPS tracking.
+        locationManager.stopTracking()
+
+        // Clear the active ride reference.
+        activeRideID = nil
+
+        isUpdatingStatus = false
+
+        print("🏁 Transportation ended for ride: \(rideID)")
     }
 
     // MARK: - Live GPS
@@ -1070,6 +1108,17 @@ struct TrackingView: View {
     private func updateTransportationStatus(
         _ status: RideStatus
     ) {
+        // Prevent duplicate status updates.
+        guard !isUpdatingStatus else {
+            return
+        }
+
+        // Only allow the next valid domino step.
+        guard nextActionStatus == status else {
+            print("⚠️ Invalid or duplicate transportation action.")
+            return
+        }
+
         guard let selectedStudentID else {
             showError("Please select a student first.")
             return
@@ -1091,6 +1140,9 @@ struct TrackingView: View {
             return
         }
 
+        // Lock the buttons while processing.
+        isUpdatingStatus = true
+
         print(
             "🚦 Updating \(student.name) → \(status.rawValue)"
         )
@@ -1107,6 +1159,10 @@ struct TrackingView: View {
             !locationManager.isTracking {
             locationManager.startTracking()
         }
+
+        // DataManager currently appears to update synchronously.
+        // Release the temporary UI lock after the call returns.
+        isUpdatingStatus = false
     }
 
     // MARK: - Stop

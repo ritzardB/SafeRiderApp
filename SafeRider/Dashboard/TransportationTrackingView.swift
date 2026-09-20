@@ -50,26 +50,19 @@ struct TransportationTrackingView: View {
     // MARK: - Children
 
     private var children: [Student] {
-        guard let parent else {
-            return []
+        // Driver account:
+        // DataManager already loads students assigned to this driver.
+        if dataManager.currentDriver != nil {
+            return dataManager.students
         }
 
-        return dataManager.students(for: parent)
-    }
-
-    // MARK: - Available Students
-
-    private var availableStudents: [Student] {
-        var result = children
-
-        if let initialStudent,
-           !result.contains(where: {
-               $0.id == initialStudent.id
-           }) {
-            result.append(initialStudent)
+        // Parent account:
+        // Preserve the existing parent-specific behavior.
+        if let parent = dataManager.currentParent {
+            return dataManager.students(for: parent)
         }
 
-        return result
+        return []
     }
 
     // MARK: - Selected Student
@@ -87,7 +80,22 @@ struct TransportationTrackingView: View {
 
         return initialStudent ?? availableStudents.first
     }
+    
+    // MARK: - Available Students
 
+    private var availableStudents: [Student] {
+        var result = children
+
+        if let initialStudent,
+           !result.contains(where: {
+               $0.id == initialStudent.id
+           }) {
+            result.append(initialStudent)
+        }
+
+        return result
+    }
+    
     // MARK: - Assigned Driver
 
     private var assignedDriver: Driver? {

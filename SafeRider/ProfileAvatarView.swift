@@ -1,10 +1,3 @@
-//
-//  ProfileAvatarView.swift
-//  SafeRider
-//
-//  Created by Richard Balabarcon on 07/09/2026.
-//
-
 import SwiftUI
 
 struct ProfileAvatarView: View {
@@ -15,8 +8,8 @@ struct ProfileAvatarView: View {
     var body: some View {
         Group {
             if let photoURL,
-               let url = URL(string: photoURL),
-               !photoURL.isEmpty {
+               !photoURL.isEmpty,
+               let url = URL(string: photoURL) {
 
                 AsyncImage(url: url) { phase in
                     switch phase {
@@ -30,35 +23,41 @@ struct ProfileAvatarView: View {
 
                     case .empty:
                         ProgressView()
+                            .tint(.orange)
 
                     @unknown default:
                         initialsView
                     }
                 }
-
             } else {
                 initialsView
             }
         }
         .frame(width: size, height: size)
+        .background(Color.orange.opacity(0.10))
         .clipShape(Circle())
         .overlay {
             Circle()
-                .stroke(.primary.opacity(0.15), lineWidth: 1)
+                .stroke(
+                    Color.orange.opacity(0.30),
+                    lineWidth: 1
+                )
         }
     }
 
     private var initialsView: some View {
         ZStack {
             Circle()
-                .fill(.blue.opacity(0.15))
+                .fill(Color.orange.opacity(0.15))
 
             Text(initials)
-                .font(.system(
-                    size: size * 0.35,
-                    weight: .bold
-                ))
-                .foregroundStyle(.blue)
+                .font(
+                    .system(
+                        size: size * 0.35,
+                        weight: .bold
+                    )
+                )
+                .foregroundStyle(.orange)
         }
     }
 

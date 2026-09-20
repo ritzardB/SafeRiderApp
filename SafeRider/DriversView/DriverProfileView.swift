@@ -1,5 +1,7 @@
 import SwiftUI
 import PhotosUI
+import UniformTypeIdentifiers
+import FirebaseAuth
 
 struct DriverProfileView: View {
 
@@ -20,6 +22,17 @@ struct DriverProfileView: View {
     @State private var selectedImage: UIImage?
     @State private var isUploadingPhoto = false
     @State private var photoError: String?
+    
+    // MARK: - Identity Document Upload
+
+    @State private var selectedDocumentType: IdentityDocumentType = .emiratesID
+    @State private var selectedDocument: URL?
+    @State private var isUploadingIdentity = false
+    @State private var identityError: String?
+    @State private var identitySuccess: String?
+    @State private var showingDocumentPicker = false
+    @State private var countryOfIssue = "United Arab Emirates"
+    @State private var expiresAt: Date?
 
     init(driver: Driver) {
         self.driver = driver
@@ -177,6 +190,90 @@ struct DriverProfileView: View {
                         text: $vehicleType
                     )
                 }
+                
+                // MARK: - Identity Verification
+
+                Section("Identity Verification") {
+
+                    Picker("Document Type", selection: $selectedDocumentType) {
+                        ForEach(IdentityDocumentType.allCases) { type in
+                            Text(type.title)
+                                .tag(type)
+                        }
+                    }
+
+                    TextField("Country of Issue", text: $countryOfIssue)
+
+                    Button {
+                        showingDocumentPicker = true
+                    } label: {
+                        Label(
+                            "Select Identity Document",
+                            systemImage: "doc.badge.plus"
+                        )
+                    }
+
+                    if let selectedDocument {
+                        Label(
+                            selectedDocument.lastPathComponent,
+                            systemImage: "doc.fill"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(SafeRiderTheme.secondaryText)
+                    }
+
+                    Button {
+                        Task {
+                            await uploadIdentityDocument()
+                        }
+                    } label: {
+                        if isUploadingIdentity {
+                            ProgressView("Uploading Document...")
+                        } else {
+                            Label("Upload Document", systemImage: "icloud.and.arrow.up")
+                        }
+                    }
+                    .disabled(selectedDocument == nil || isUploadingIdentity)
+
+                    if let identitySuccess {
+                        Text(identitySuccess)
+                            .font(.caption)
+                            .foregroundStyle(SafeRiderTheme.success)
+                    }
+
+                    Text(
+                        "Your identity document will be securely submitted for review."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(SafeRiderTheme.secondaryText)
+                }
+                
+                .fileImporter(
+                    isPresented: $showingDocumentPicker,
+                    allowedContentTypes: [.pdf, .jpeg, .png],
+                    allowsMultipleSelection: false
+                ) { result in
+                    switch result {
+                    case .success(let urls):
+                        selectedDocument = urls.first
+
+                    case .failure(let error):
+                        identityError = error.localizedDescription
+                    }
+                }
+                
+                // MARK: - Settings
+
+                Section("Settings") {
+                    NavigationLink {
+                        DriverSettingsView()
+                    } label: {
+                        Label(
+                            "Settings & Account",
+                            systemImage: "gearshape"
+                        )
+                    }
+                }
 
                 // MARK: - Account
 
@@ -262,6 +359,18 @@ struct DriverProfileView: View {
         } message: {
             Text(photoError ?? "")
         }
+        
+        .alert(
+            "Identity Upload Error",
+            isPresented: Binding(
+                get: { identityError != nil },
+                set: { if !$0 { identityError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(identityError ?? "")
+        }
     }
 
     // MARK: - Load Selected Photo
@@ -328,6 +437,81 @@ struct DriverProfileView: View {
             photoError = error.localizedDescription
         }
     }
+    
+    // MARK: - Upload Identity Document
+
+    private func uploadIdentityDocument() async {
+        guard let selectedDocument,
+              let uid = Auth.auth().currentUser?.uid else {
+            identityError = "Unable to identify the authenticated driver."
+            return
+        }
+
+        isUploadingIdentity = true
+        defer {
+            isUploadingIdentity = false
+        }
+
+        do {
+            let didAccess = selectedDocument.startAccessingSecurityScopedResource()
+            defer {
+                if didAccess {
+                    selectedDocument.stopAccessingSecurityScopedResource()
+                }
+            }
+
+            let data = try Data(contentsOf: selectedDocument)
+
+            let fileExtension = selectedDocument.pathExtension.lowercased()
+
+            let contentType: String
+            switch fileExtension {
+            case "pdf":
+                contentType = "application/pdf"
+            case "jpg", "jpeg":
+                contentType = "image/jpeg"
+            case "png":
+                contentType = "image/png"
+            default:
+                throw NSError(
+                    domain: "SafeRider.Identity",
+                    code: 400,
+                    userInfo: [
+                        NSLocalizedDescriptionKey:
+                            "Unsupported document format."
+                    ]
+                )
+            }
+
+            let storagePath = try await StorageManager.shared
+                .uploadDriverIdentityDocument(
+                    data: data,
+                    identifier: uid,
+                    fileExtension: fileExtension,
+                    contentType: contentType
+                )
+
+            let document = DriverIdentityDocument(
+                driverAuthUID: uid,
+                documentType: selectedDocumentType,
+                countryOfIssue: countryOfIssue,
+                storagePath: storagePath,
+                expiresAt: expiresAt,
+                status: .pending
+            )
+
+            try await dataManager.submitDriverIdentityDocument(document)
+
+            identitySuccess = "Document submitted for review."
+            identityError = nil
+            self.selectedDocument = nil
+
+        } catch {
+            identityError = error.localizedDescription
+        }
+    }
+    
+
 
     // MARK: - Save Profile
 

@@ -1,4 +1,5 @@
 import Foundation
+import FirebaseCore
 
 enum UserRole: String, Codable, CaseIterable {
     case parent
@@ -83,6 +84,132 @@ struct Driver: Identifiable, Codable {
     var email: String
     var phoneNumber: String
     var photoURL: String? = nil
+    
+    // MARK: - Driver Directory & Privacy
+
+    var isPubliclyListed: Bool = false
+    var serviceArea: String = ""
+}
+
+// MARK: - Driver Identity Verification
+
+enum IdentityDocumentType: String, Codable, CaseIterable, Identifiable {
+    case emiratesID
+    case passport
+    case nationalID
+    case driversLicense
+    case residencePermit
+    case other
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .emiratesID:
+            return "Emirates ID"
+        case .passport:
+            return "Passport"
+        case .nationalID:
+            return "National ID"
+        case .driversLicense:
+            return "Driver's License"
+        case .residencePermit:
+            return "Residence Permit"
+        case .other:
+            return "Other Government ID"
+        }
+    }
+}
+
+struct DriverIdentityDocument: Identifiable, Codable {
+    var id: UUID = UUID()
+
+    var driverAuthUID: String
+    var documentType: IdentityDocumentType
+    var countryOfIssue: String
+
+    // Store only a masked number, never the full ID number.
+    var maskedDocumentNumber: String?
+
+    // Firebase Storage path, not a public download URL.
+    var storagePath: String
+
+    var submittedAt: Date = Date()
+    var expiresAt: Date?
+
+    var status: IdentityVerificationStatus = .pending
+
+    var reviewedAt: Date?
+    var reviewerUID: String?
+    var rejectionReason: String?
+}
+
+extension DriverIdentityDocument {
+
+    static func fromFirestore(
+        _ data: [String: Any]
+    ) -> DriverIdentityDocument? {
+
+        guard
+            let idString = data["id"] as? String,
+            let id = UUID(uuidString: idString),
+            let driverAuthUID = data["driverAuthUID"] as? String,
+            let documentTypeString = data["documentType"] as? String,
+            let documentType = IdentityDocumentType(
+                rawValue: documentTypeString
+            ),
+            let countryOfIssue = data["countryOfIssue"] as? String,
+            let storagePath = data["storagePath"] as? String,
+            let statusString = data["status"] as? String,
+            let status = IdentityVerificationStatus(
+                rawValue: statusString
+            )
+        else {
+            return nil
+        }
+
+        return DriverIdentityDocument(
+            id: id,
+            driverAuthUID: driverAuthUID,
+            documentType: documentType,
+            countryOfIssue: countryOfIssue,
+            maskedDocumentNumber:
+                data["maskedDocumentNumber"] as? String,
+            storagePath: storagePath,
+            submittedAt:
+                (data["submittedAt"] as? Timestamp)?.dateValue() ?? Date(),
+            expiresAt:
+                (data["expiresAt"] as? Timestamp)?.dateValue(),
+            status: status,
+            reviewedAt:
+                (data["reviewedAt"] as? Timestamp)?.dateValue(),
+            reviewerUID: data["reviewerUID"] as? String,
+            rejectionReason: data["rejectionReason"] as? String
+        )
+    }
+}
+
+enum IdentityVerificationStatus: String, Codable, CaseIterable {
+    case notSubmitted
+    case pending
+    case verified
+    case rejected
+    case expired
+
+    var title: String {
+        switch self {
+        case .notSubmitted:
+            return "Not Submitted"
+        case .pending:
+            return "Pending Review"
+        case .verified:
+            return "Verified"
+        case .rejected:
+            return "Rejected"
+        case .expired:
+            return "Expired"
+        }
+    }
 }
 
 enum DriverConnectionSource: String, Codable, CaseIterable {
@@ -164,6 +291,7 @@ struct Payment: Identifiable, Codable {
     var parentId: UUID
     var studentId: UUID
     var driverId: UUID?
+    var driverAuthUID: UUID?
 
     var amount: Double
     var date: Date

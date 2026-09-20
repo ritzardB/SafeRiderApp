@@ -22,6 +22,8 @@ final class DataManager: ObservableObject {
     @Published private(set) var expenses: [Expense] = []
     @Published private(set) var systemLogs: [Log] = []
     @Published private(set) var transportationSchedules: [TransportationSchedule] = []
+    @Published private(set) var driverIdentityDocuments:
+        [DriverIdentityDocument] = []
     
     @Published private(set) var currentParent: Parent?
     @Published private(set) var currentDriver: Driver?
@@ -829,6 +831,71 @@ final class DataManager: ObservableObject {
         }
     }
     
+    // MARK: - Driver Identity Documents
+
+    func submitDriverIdentityDocument(
+        _ document: DriverIdentityDocument
+    ) async throws {
+        guard let uid = currentUID,
+              currentRole == .driver,
+              document.driverAuthUID == uid else {
+            throw NSError(
+                domain: "SafeRider.Identity",
+                code: 401,
+                userInfo: [
+                    NSLocalizedDescriptionKey:
+                        "Unauthorized identity document submission."
+                ]
+            )
+        }
+
+        let data: [String: Any] = [
+            "id": document.id.uuidString,
+            "driverAuthUID": uid,
+            "documentType": document.documentType.rawValue,
+            "countryOfIssue": document.countryOfIssue,
+            "maskedDocumentNumber":
+                document.maskedDocumentNumber as Any? ?? NSNull(),
+            "storagePath": document.storagePath,
+            "submittedAt": FieldValue.serverTimestamp(),
+            "expiresAt": document.expiresAt as Any? ?? NSNull(),
+            "status": IdentityVerificationStatus.pending.rawValue,
+            "reviewedAt": NSNull(),
+            "reviewerUID": NSNull(),
+            "rejectionReason": NSNull()
+        ]
+
+        try await db
+            .collection("driverIdentityDocuments")
+            .document(document.id.uuidString)
+            .setData(data)
+    }
+    
+    // MARK: - Driver Identity Documents
+
+    func fetchMyDriverIdentityDocuments() async throws {
+        guard let uid = currentUID,
+              currentRole == .driver else {
+            throw NSError(
+                domain: "SafeRider.Identity",
+                code: 401,
+                userInfo: [
+                    NSLocalizedDescriptionKey:
+                        "Unauthorized identity document access."
+                ]
+            )
+        }
+
+        let snapshot = try await db
+            .collection("driverIdentityDocuments")
+            .whereField("driverAuthUID", isEqualTo: uid)
+            .getDocuments()
+
+        driverIdentityDocuments = snapshot.documents.compactMap {
+            DriverIdentityDocument.fromFirestore($0.data())
+        }
+    }
+    
     // MARK: - Student Mutations
     
     func addStudent(
@@ -1526,9 +1593,14 @@ final class DataManager: ObservableObject {
                 d.vehicleNumber,
             "vehicleType":
                 d.vehicleType,
-            "email": d.email,
+            "email":
+                d.email,
             "phoneNumber":
                 d.phoneNumber,
+            "isPubliclyListed":
+                d.isPubliclyListed,
+            "serviceArea":
+                d.serviceArea,
             "updatedAt":
                 FieldValue.serverTimestamp()
         ]
@@ -1586,7 +1658,8 @@ final class DataManager: ObservableObject {
             photoURL: string(
                 d,
                 "photoURL"
-            )
+            ), isPubliclyListed: d["isPubliclyListed"] as? Bool ?? false,
+            serviceArea: string(d, "serviceArea") ?? ""
         )
     }
     
