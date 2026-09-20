@@ -8,6 +8,8 @@ struct RegisterView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var role: UserRole = .parent
+    @State private var isPubliclyListed = false
+    @State private var serviceArea = ""
     @State private var errorMessage = ""
     @State private var isRegistering = false
 
@@ -156,6 +158,72 @@ struct RegisterView: View {
                                     role: .driver
                                 )
                             }
+                        }
+                        
+                        // MARK: - Driver Directory Visibility
+
+                        if role == .driver {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Driver Directory Visibility")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(SafeRiderTheme.primaryText)
+
+                                Toggle(
+                                    "Make my profile public",
+                                    isOn: $isPubliclyListed
+                                )
+                                .tint(SafeRiderTheme.orange)
+
+                                Text(
+                                    isPubliclyListed
+                                    ? "Parents can discover your driver profile."
+                                    : "Your profile stays private and won't appear "
+                                        + "in the public directory."
+                                )
+                                .font(.footnote)
+                                .foregroundStyle(SafeRiderTheme.secondaryText)
+
+                                if isPubliclyListed {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("Service Area")
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(SafeRiderTheme.primaryText)
+
+                                        TextField(
+                                            "e.g. Abu Dhabi, Khalifa City",
+                                            text: $serviceArea
+                                        )
+                                        .textInputAutocapitalization(.words)
+                                        .padding(.horizontal, 16)
+                                        .frame(height: 52)
+                                        .background(SafeRiderTheme.background)
+                                        .clipShape(
+                                            RoundedRectangle(
+                                                cornerRadius: 14,
+                                                style: .continuous
+                                            )
+                                        )
+                                        .overlay {
+                                            RoundedRectangle(
+                                                cornerRadius: 14,
+                                                style: .continuous
+                                            )
+                                            .stroke(
+                                                SafeRiderTheme.orange.opacity(0.35),
+                                                lineWidth: 1
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(14)
+                            .background(SafeRiderTheme.background)
+                            .clipShape(
+                                RoundedRectangle(
+                                    cornerRadius: 14,
+                                    style: .continuous
+                                )
+                            )
                         }
 
                         // MARK: - Error
@@ -337,10 +405,24 @@ struct RegisterView: View {
     // MARK: - Validation
 
     private var isFormValid: Bool {
-        !email
+        let hasEmail = !email
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .isEmpty
-        && !password.isEmpty
+
+        let hasPassword = !password.isEmpty
+
+        let hasServiceArea = !serviceArea
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty
+
+        let isDriverDirectoryValid =
+            role != .driver
+            || !isPubliclyListed
+            || hasServiceArea
+
+        return hasEmail
+            && hasPassword
+            && isDriverDirectoryValid
     }
 
     // MARK: - Registration
