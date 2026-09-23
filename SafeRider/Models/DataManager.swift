@@ -30,6 +30,7 @@ final class DataManager: ObservableObject {
     
     @Published var errorMessage: String?
     @Published private(set) var isLoading = true
+    @Published private(set) var publicDrivers: [PublicDriverListing] = []
     
     // MARK: - Firebase
     
@@ -1587,35 +1588,26 @@ final class DataManager: ObservableObject {
         var data: [String: Any] = [
             "id": d.id.uuidString,
             "name": d.name,
-            "licenseNumber":
-                d.licenseNumber,
-            "vehicleNumber":
-                d.vehicleNumber,
-            "vehicleType":
-                d.vehicleType,
-            "email":
-                d.email,
-            "phoneNumber":
-                d.phoneNumber,
-            "isPubliclyListed":
-                d.isPubliclyListed,
-            "serviceArea":
-                d.serviceArea,
-            "updatedAt":
-                FieldValue.serverTimestamp()
+            "licenseNumber": d.licenseNumber,
+            "vehicleNumber": d.vehicleNumber,
+            "vehicleType": d.vehicleType,
+            "email": d.email,
+            "phoneNumber": d.phoneNumber,
+            "isPubliclyListed": d.isPubliclyListed,
+            "serviceArea": d.serviceArea,
+            "updatedAt": FieldValue.serverTimestamp()
         ]
-        
+
         if let authUID = d.authUID {
             data["authUID"] = authUID
         }
-        
+
         if let photoURL = d.photoURL {
             data["photoURL"] = photoURL
         }
-        
+
         return data
     }
-    
     private func driver(
         from d: [String: Any]
     ) -> Driver? {
@@ -1624,6 +1616,48 @@ final class DataManager: ObservableObject {
         else {
             return nil
         }
+        
+        // MARK: - Service Areas
+
+            var serviceAreas: [ServiceArea] = []
+
+            // Read the new structured serviceAreas array.
+            if let areaData = d["serviceAreas"] as? [[String: Any]] {
+                serviceAreas = areaData.compactMap { area in
+                    guard
+                        let countryCode = area["countryCode"] as? String,
+                        let countryName = area["countryName"] as? String,
+                        let region = area["region"] as? String,
+                        let city = area["city"] as? String
+                    else {
+                        return nil
+                    }
+
+                    return ServiceArea(
+                        id: area["id"] as? String ?? UUID().uuidString,
+                        countryCode: countryCode,
+                        countryName: countryName,
+                        region: region,
+                        city: city,
+                        district: area["district"] as? String
+                    )
+                }
+            }
+
+            // Legacy fallback: support the previous single serviceArea string.
+            if serviceAreas.isEmpty,
+               let legacyArea = string(d, "serviceArea"),
+               !legacyArea.isEmpty {
+
+                serviceAreas = [
+                    ServiceArea(
+                        countryCode: "",
+                        countryName: "",
+                        region: "",
+                        city: legacyArea
+                    )
+                ]
+            }
         
         return Driver(
             id: id,
@@ -1660,7 +1694,7 @@ final class DataManager: ObservableObject {
                 "photoURL"
             ), isPubliclyListed: d["isPubliclyListed"] as? Bool ?? false,
             serviceArea: string(d, "serviceArea") ?? ""
-        )
+            )
     }
     
     // MARK: - Student Mapping

@@ -184,36 +184,9 @@ struct RegisterView: View {
                                 .foregroundStyle(SafeRiderTheme.secondaryText)
 
                                 if isPubliclyListed {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("Service Area")
-                                            .font(.subheadline.weight(.semibold))
-                                            .foregroundStyle(SafeRiderTheme.primaryText)
-
-                                        TextField(
-                                            "e.g. Abu Dhabi, Khalifa City",
-                                            text: $serviceArea
-                                        )
-                                        .textInputAutocapitalization(.words)
-                                        .padding(.horizontal, 16)
-                                        .frame(height: 52)
-                                        .background(SafeRiderTheme.background)
-                                        .clipShape(
-                                            RoundedRectangle(
-                                                cornerRadius: 14,
-                                                style: .continuous
-                                            )
-                                        )
-                                        .overlay {
-                                            RoundedRectangle(
-                                                cornerRadius: 14,
-                                                style: .continuous
-                                            )
-                                            .stroke(
-                                                SafeRiderTheme.orange.opacity(0.35),
-                                                lineWidth: 1
-                                            )
-                                        }
-                                    }
+                                    ServiceAreaInputView(
+                                        serviceArea: $serviceArea
+                                    )
                                 }
                             }
                             .padding(14)
@@ -404,6 +377,8 @@ struct RegisterView: View {
 
     // MARK: - Validation
 
+    // MARK: - Validation
+
     private var isFormValid: Bool {
         let hasEmail = !email
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -415,14 +390,12 @@ struct RegisterView: View {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .isEmpty
 
-        let isDriverDirectoryValid =
-            role != .driver
-            || !isPubliclyListed
-            || hasServiceArea
+        let isDriverServiceAreaValid =
+            role != .driver || hasServiceArea
 
         return hasEmail
             && hasPassword
-            && isDriverDirectoryValid
+            && isDriverServiceAreaValid
     }
 
     // MARK: - Registration

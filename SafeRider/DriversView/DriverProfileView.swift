@@ -25,7 +25,7 @@ struct DriverProfileView: View {
     
     // MARK: - Identity Document Upload
 
-    @State private var selectedDocumentType: IdentityDocumentType = .emiratesID
+    @State private var selectedDocumentType: IdentityDocumentType = .driverLicense
     @State private var selectedDocument: URL?
     @State private var isUploadingIdentity = false
     @State private var identityError: String?

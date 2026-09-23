@@ -88,16 +88,18 @@ struct Driver: Identifiable, Codable {
     // MARK: - Driver Directory & Privacy
 
     var isPubliclyListed: Bool = false
+    
+    // MARK: - Driver Service Area
+    
     var serviceArea: String = ""
 }
 
 // MARK: - Driver Identity Verification
 
 enum IdentityDocumentType: String, Codable, CaseIterable, Identifiable {
-    case emiratesID
+    case driverLicense
     case passport
     case nationalID
-    case driversLicense
     case residencePermit
     case other
 
@@ -105,14 +107,12 @@ enum IdentityDocumentType: String, Codable, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .emiratesID:
-            return "Emirates ID"
+        case .driverLicense:
+            return "Driver's License"
         case .passport:
             return "Passport"
         case .nationalID:
             return "National ID"
-        case .driversLicense:
-            return "Driver's License"
         case .residencePermit:
             return "Residence Permit"
         case .other:

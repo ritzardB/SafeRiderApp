@@ -571,7 +571,7 @@ struct ParentDashboardView: View {
                 ],
                 spacing: 12
             ) {
-
+                
                 // Driver Info
                 NavigationLink {
                     ParentDriverInfoView()
@@ -582,7 +582,7 @@ struct ParentDashboardView: View {
                     )
                 }
                 .buttonStyle(.plain)
-
+                
                 // Tracking
                 NavigationLink {
                     TransportationTrackingView()
@@ -593,7 +593,7 @@ struct ParentDashboardView: View {
                     )
                 }
                 .buttonStyle(.plain)
-
+                
                 // Schedule
                 NavigationLink {
                     ParentTransportationScheduleView()
@@ -604,7 +604,7 @@ struct ParentDashboardView: View {
                     )
                 }
                 .buttonStyle(.plain)
-
+                
                 // Payments
                 quickAction(
                     title: "Payments",
@@ -612,6 +612,20 @@ struct ParentDashboardView: View {
                     tab: .payments
                 )
             }
+    
+                // Find a Driver Spanned in two column
+                NavigationLink {
+                    FindDriverView()
+                        .environmentObject(dataManager)
+                } label: {
+                    quickActionContent(
+                        title: "Find a Driver",
+                        icon: "magnifyingglass"
+                    )
+                }
+                .buttonStyle(.plain)
+                .gridCellColumns(2)
+            
         }
     }
 

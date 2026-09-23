@@ -37,7 +37,11 @@ final class AuthManager: ObservableObject {
         }
     }
 
-    func register(email: String, password: String, role: UserRole) async -> Result<User, Error> {
+    func register(
+        email: String,
+        password: String,
+        role: UserRole
+    ) async -> Result<User, Error> {
         do {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
             let user = result.user
