@@ -22,62 +22,137 @@ struct StudentProfileView: View {
                 // MARK: - Student Profile
 
                 Section {
-                    VStack(spacing: 12) {
-                        ZStack(alignment: .bottomTrailing) {
-                            Group {
-                                if let previewImage {
-                                    Image(uiImage: previewImage)
-                                        .resizable()
-                                        .scaledToFill()
-                                } else {
-                                    ProfileAvatarView(
-                                        name: student.name,
-                                        photoURL: student.photoURL,
-                                        size: 120
-                                    )
+                    ZStack(alignment: .bottomLeading) {
+
+                        // MARK: Background Photo
+
+                        ZStack {
+                            SafeRiderTheme.orange
+
+                            if let previewImage {
+                                Image(uiImage: previewImage)
+                                    .resizable()
+                                    .scaledToFill()
+
+                            } else if let photoURL = student.photoURL,
+                                      let url = URL(string: photoURL) {
+
+                                AsyncImage(url: url) { phase in
+                                    if let image = phase.image {
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                    } else {
+                                        SafeRiderTheme.orange
+                                    }
                                 }
                             }
-                            .frame(width: 120, height: 120)
-                            .clipShape(Circle())
+                        }
+                        .frame(height: 180)
+                        .frame(maxWidth: .infinity)
+                        .clipped()
+                        
+                        // MARK: Gradient Overlay
+
+                        LinearGradient(
+                            colors: [
+                                .black.opacity(0.05),
+                                .black.opacity(0.25),
+                                .black.opacity(0.75)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+
+                        // MARK: Student Details
+
+                        HStack(alignment: .bottom, spacing: 16) {
+
+                            // Student Avatar
 
                             PhotosPicker(
                                 selection: $selectedPhoto,
                                 matching: .images,
                                 photoLibrary: .shared()
                             ) {
-                                ZStack {
-                                    Circle()
-                                        .fill(SafeRiderTheme.orange)
-                                        .frame(width: 38, height: 38)
-
-                                    Image(systemName: "camera.fill")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundStyle(.white)
+                                Group {
+                                    if let previewImage {
+                                        Image(uiImage: previewImage)
+                                            .resizable()
+                                            .scaledToFill()
+                                    } else {
+                                        ProfileAvatarView(
+                                            name: student.name,
+                                            photoURL: student.photoURL,
+                                            size: 82
+                                        )
+                                    }
                                 }
-                                .overlay(
+                                .frame(width: 82, height: 82)
+                                .clipShape(Circle())
+                                .overlay {
                                     Circle()
-                                        .stroke(.white, lineWidth: 2)
-                                )
+                                        .stroke(.white, lineWidth: 3)
+                                }
+                                .overlay(alignment: .bottomTrailing) {
+                                    Image(systemName: "camera.fill")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundStyle(.white)
+                                        .padding(7)
+                                        .background(SafeRiderTheme.orange)
+                                        .clipShape(Circle())
+                                        .overlay {
+                                            Circle()
+                                                .stroke(.white, lineWidth: 1.5)
+                                        }
+                                }
                             }
                             .disabled(isUploadingPhoto)
+
+                            // Name and Grade
+
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(student.name)
+                                    .font(.title2.weight(.bold))
+                                    .foregroundStyle(.white)
+                                    .lineLimit(2)
+
+                                Text("\(student.grade) • \(student.section)")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(.white.opacity(0.9))
+                            }
+
+                            Spacer(minLength: 0)
                         }
+                        .padding(20)
 
-                        Text(student.name)
-                            .font(.title2.weight(.bold))
-                            .foregroundStyle(SafeRiderTheme.primaryText)
-
-                        Text("\(student.grade) • \(student.section)")
-                            .font(.subheadline)
-                            .foregroundStyle(SafeRiderTheme.secondaryText)
+                        // MARK: Upload Indicator
 
                         if isUploadingPhoto {
                             ProgressView("Uploading photo...")
-                                .tint(SafeRiderTheme.orange)
+                                .tint(.white)
+                                .padding(8)
+                                .background(.black.opacity(0.5))
+                                .clipShape(Capsule())
+                                .frame(
+                                    maxWidth: .infinity,
+                                    maxHeight: .infinity,
+                                    alignment: .topTrailing
+                                )
+                                .padding(12)
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .listRowBackground(Color.white)
+                    .frame(height: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .listRowInsets(
+                        EdgeInsets(
+                            top: 0,
+                            leading: 16,
+                            bottom: 8,
+                            trailing: 16
+                        )
+                    )
+                    .listRowBackground(Color.clear)
                 }
 
                 // MARK: - Student Information
@@ -101,6 +176,7 @@ struct StudentProfileView: View {
                                 address: student.homeAddress
                             )
                 }
+                
 
                 // MARK: - School Information
 
@@ -130,6 +206,54 @@ struct StudentProfileView: View {
                         LabeledContent("Teacher Phone") {
                             Text(student.teacherPhone)
                         }
+                    }
+                }
+                
+                // MARK: - Payment Arrangement
+
+                Section("Payment Arrangement") {
+                    if let arrangement = dataManager.paymentArrangements.first(
+                        where: { $0.studentId == student.id }
+                    ) {
+                        LabeledContent("Frequency") {
+                            Text(arrangement.paymentFrequency.rawValue)
+                        }
+
+                        LabeledContent("Amount") {
+                            Text(
+                                arrangement.amount,
+                                format: .currency(code: "AED")
+                            )
+                        }
+
+                        if let dueDay = arrangement.dueDay {
+                            LabeledContent("Payment Day") {
+                                Text("Day \(dueDay) of the month")
+                            }
+                        }
+
+                        if let dueWeekday = arrangement.dueWeekday {
+                            LabeledContent("Payment Day") {
+                                Text(weekdayName(dueWeekday))
+                            }
+                        }
+
+                        LabeledContent("Next Due Date") {
+                            Text(arrangement.nextDueDate, style: .date)
+                        }
+
+                        LabeledContent("Status") {
+                            Text(arrangement.isActive ? "Active" : "Inactive")
+                                .foregroundStyle(
+                                    arrangement.isActive
+                                        ? .green
+                                        : SafeRiderTheme.secondaryText
+                                )
+                        }
+                    } else {
+                        Text("No payment arrangement configured.")
+                            .font(.subheadline)
+                            .foregroundStyle(SafeRiderTheme.secondaryText)
                     }
                 }
                 
@@ -246,6 +370,20 @@ struct StudentProfileView: View {
         }
     }
     
+    // MARK: - Payment Arrangement Helpers
+
+    private func weekdayName(_ weekday: Int) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+
+        guard let weekdays = formatter.weekdaySymbols,
+              (1...7).contains(weekday) else {
+            return "Not specified"
+        }
+
+        return weekdays[weekday - 1]
+    }
+    
     private func addressRow(
         title: String,
         icon: String,
@@ -344,7 +482,7 @@ struct StudentProfileView: View {
             return
         }
 
-        dataManager.updateTodayRide(
+        _ = dataManager.updateTodayRide(
             studentId: student.id,
             driverId: driver.id,
             status: status

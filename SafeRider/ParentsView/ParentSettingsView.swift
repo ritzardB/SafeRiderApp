@@ -38,6 +38,19 @@ struct ParentSettingsView: View {
                         }
                     }
                 }
+                
+                Section("Payment Settings") {
+                    NavigationLink {
+                        PaymentArrangementView()
+                    } label: {
+                        Label {
+                            Text("Payment Settings")
+                        } icon: {
+                            Image(systemName: "heart.text.clipboard.fill")
+                                .foregroundStyle(SafeRiderTheme.orange)
+                        }
+                    }
+                }
 
                 Section {
                     Button(role: .destructive) {

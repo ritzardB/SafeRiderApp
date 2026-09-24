@@ -31,12 +31,15 @@ final class DataManager: ObservableObject {
     @Published var errorMessage: String?
     @Published private(set) var isLoading = true
     @Published private(set) var publicDrivers: [PublicDriverListing] = []
+    @Published private(set) var paymentArrangements: [PaymentArrangement] = []
     
     // MARK: - Firebase
     
     private let db = Firestore.firestore()
     private var listeners: [ListenerRegistration] = []
+    private var arrangementListeners: [ListenerRegistration] = []
     private var driverScheduleCache: [TransportationSchedule] = []
+    
     
     private var currentUID: String?
     private var currentRole: UserRole?
@@ -52,6 +55,13 @@ final class DataManager: ObservableObject {
         listeners.forEach { $0.remove() }
     }
     
+    // MARK: - Payment Arrangement Listener Cleanup
+
+    private func clearArrangementListeners() {
+        arrangementListeners.forEach { $0.remove() }
+        arrangementListeners.removeAll()
+    }
+    
     // MARK: - Session
     
     func syncAuthenticatedUser(
@@ -64,6 +74,8 @@ final class DataManager: ObservableObject {
         
         listeners.forEach { $0.remove() }
         listeners.removeAll()
+        clearArrangementListeners()
+
         
         currentParent = nil
         currentDriver = nil
@@ -73,9 +85,11 @@ final class DataManager: ObservableObject {
         students = []
         rides = []
         payments = []
+        paymentArrangements = []
         expenses = []
         systemLogs = []
         transportationSchedules = []
+       
         
         guard let uid, let role else {
             isLoading = false
@@ -270,6 +284,43 @@ final class DataManager: ObservableObject {
         return profile
     }
     
+    // MARK: - Parent Payment Arrangement Listener
+
+    private func startParentPaymentArrangementListener() {
+        guard let parentId = currentParent?.id else {
+            return
+        }
+
+        clearArrangementListeners()
+
+        let listener = db.collection("paymentArrangements")
+            .whereField(
+                "parentId",
+                isEqualTo: parentId.uuidString
+            )
+            .addSnapshotListener { [weak self] snapshot, error in
+                Task { @MainActor in
+                    guard let self else { return }
+
+                    if let error {
+                        self.errorMessage = error.localizedDescription
+                        return
+                    }
+
+                    guard let documents = snapshot?.documents else {
+                        self.paymentArrangements = []
+                        return
+                    }
+
+                    self.paymentArrangements = documents.compactMap {
+                        self.paymentArrangement(from: $0.data())
+                    }
+                }
+            }
+
+        arrangementListeners.append(listener)
+    }
+    
     // MARK: - Firestore Listeners
     
     private func startListeners() {
@@ -355,6 +406,30 @@ final class DataManager: ObservableObject {
                     )
                 }
             }
+            
+            // Payment Arrangements
+            let arrangementListener = db.collection("paymentArrangements")
+                .addSnapshotListener { [weak self] snapshot, error in
+                    Task { @MainActor in
+                        guard let self else { return }
+
+                        if let error {
+                            self.errorMessage = error.localizedDescription
+                            return
+                        }
+
+                        guard let documents = snapshot?.documents else {
+                            self.paymentArrangements = []
+                            return
+                        }
+
+                        self.paymentArrangements = documents.compactMap {
+                            self.paymentArrangement(from: $0.data())
+                        }
+                    }
+                }
+
+            arrangementListeners.append(arrangementListener)
 
             return
         }
@@ -383,6 +458,7 @@ final class DataManager: ObservableObject {
                 // Start parent-specific listeners only after
                 // currentParent is available.
                 self.startParentPaymentListener()
+                self.startParentPaymentArrangementListener()
                 self.startParentScheduleListener()
             }
             
@@ -494,6 +570,9 @@ final class DataManager: ObservableObject {
                         for: assignedStudents
                     )
                 }
+                self.startDriverPaymentArrangementListeners(
+                    for: assignedStudents
+                )
             }
             
             // Expenses
@@ -554,6 +633,59 @@ final class DataManager: ObservableObject {
             
         case .admin:
             break
+        }
+    }
+    
+    // MARK: - Driver Payment Arrangement Listeners
+
+    private func startDriverPaymentArrangementListeners(
+        for assignedStudents: [Student]
+    ) {
+        // Remove previous driver arrangement listeners.
+        clearArrangementListeners()
+
+        // Clear stale arrangement data before rebuilding listeners.
+        paymentArrangements = []
+
+        guard !assignedStudents.isEmpty else {
+            return
+        }
+
+        for student in assignedStudents {
+            let listener = db.collection("paymentArrangements")
+                .document(student.id.uuidString)
+                .addSnapshotListener { [weak self] snapshot, error in
+                    Task { @MainActor in
+                        guard let self else { return }
+
+                        if let error {
+                            self.errorMessage = error.localizedDescription
+                            return
+                        }
+
+                        guard let snapshot,
+                              snapshot.exists,
+                              let data = snapshot.data(),
+                              let arrangement = self.paymentArrangement(from: data)
+                        else {
+                            // Remove the arrangement if it no longer exists.
+                            self.paymentArrangements.removeAll {
+                                $0.studentId == student.id
+                            }
+                            return
+                        }
+
+                        // Replace the student's existing arrangement,
+                        // rather than adding duplicates.
+                        self.paymentArrangements.removeAll {
+                            $0.studentId == arrangement.studentId
+                        }
+
+                        self.paymentArrangements.append(arrangement)
+                    }
+                }
+
+            arrangementListeners.append(listener)
         }
     }
     
@@ -1580,6 +1712,56 @@ final class DataManager: ObservableObject {
         )
     }
     
+    // MARK: - Payment Arrangement Mapping
+
+    private func paymentArrangementData(
+        _ arrangement: PaymentArrangement
+    ) -> [String: Any] {
+        [
+            "id": arrangement.id.uuidString,
+            "parentId": arrangement.parentId.uuidString,
+            "studentId": arrangement.studentId.uuidString,
+            "paymentFrequency": arrangement.paymentFrequency.rawValue,
+            "amount": arrangement.amount,
+            "dueDay": arrangement.dueDay as Any? ?? NSNull(),
+            "dueWeekday": arrangement.dueWeekday as Any? ?? NSNull(),
+            "nextDueDate": Timestamp(date: arrangement.nextDueDate),
+            "isActive": arrangement.isActive,
+            "createdAt": Timestamp(date: arrangement.createdAt),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+    }
+
+    private func paymentArrangement(
+        from data: [String: Any]
+    ) -> PaymentArrangement? {
+        guard
+            let id = uuid(data, "id"),
+            let parentId = uuid(data, "parentId"),
+            let studentId = uuid(data, "studentId"),
+            let frequencyRaw = string(data, "paymentFrequency"),
+            let frequency = PaymentFrequency(rawValue: frequencyRaw),
+            let amount = data["amount"] as? Double,
+            let nextDueDate = date(data, "nextDueDate")
+        else {
+            return nil
+        }
+
+        return PaymentArrangement(
+            id: id,
+            parentId: parentId,
+            studentId: studentId,
+            paymentFrequency: frequency,
+            amount: amount,
+            dueDay: data["dueDay"] as? Int,
+            dueWeekday: data["dueWeekday"] as? Int,
+            nextDueDate: nextDueDate,
+            isActive: data["isActive"] as? Bool ?? true,
+            createdAt: date(data, "createdAt", fallback: Date()),
+            updatedAt: date(data, "updatedAt", fallback: Date())
+        )
+    }
+    
     // MARK: - Driver Mapping
     
     private func driverData(
@@ -1695,6 +1877,51 @@ final class DataManager: ObservableObject {
             ), isPubliclyListed: d["isPubliclyListed"] as? Bool ?? false,
             serviceArea: string(d, "serviceArea") ?? ""
             )
+    }
+    
+    func savePaymentArrangement(
+        _ arrangement: PaymentArrangement
+    ) {
+        Task {
+            do {
+                var updatedArrangement = arrangement
+                updatedArrangement.updatedAt = Date()
+
+                let data = paymentArrangementData(updatedArrangement)
+
+                try await db
+                    .collection("paymentArrangements")
+                    .document(updatedArrangement.studentId.uuidString)
+                    .setData(data, merge: true)
+
+                if let index = paymentArrangements.firstIndex(
+                    where: { $0.studentId == updatedArrangement.studentId }
+                ) {
+                    paymentArrangements[index] = updatedArrangement
+                } else {
+                    paymentArrangements.append(updatedArrangement)
+                }
+
+                errorMessage = nil
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+    
+    func fetchPaymentArrangement(
+        for studentId: UUID
+    ) async throws -> PaymentArrangement? {
+        let snapshot = try await db
+            .collection("paymentArrangements")
+            .document(studentId.uuidString)
+            .getDocument()
+
+        guard let data = snapshot.data() else {
+            return nil
+        }
+
+        return paymentArrangement(from: data)
     }
     
     // MARK: - Student Mapping

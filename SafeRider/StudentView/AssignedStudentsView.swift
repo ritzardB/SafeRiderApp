@@ -63,7 +63,7 @@ struct AssignedStudentsView: View {
                                         .foregroundStyle(
                                             SafeRiderTheme.secondaryText
                                         )
-
+                                        
                                         if !student.teacherName.isEmpty {
                                             Text(
                                                 "Teacher: "
@@ -74,6 +74,73 @@ struct AssignedStudentsView: View {
                                                 SafeRiderTheme.secondaryText
                                             )
                                         }
+                                        
+                                        // MARK: - Payment Arrangement Summary
+
+                                        if let arrangement = dataManager.paymentArrangements.first(
+                                            where: { $0.studentId == student.id }
+                                        ) {
+                                            VStack(alignment: .leading, spacing: 6) {
+
+                                                Divider()
+
+                                                Label(
+                                                    "Payment Arrangement",
+                                                    systemImage: "creditcard.fill"
+                                                )
+                                                .font(.subheadline.weight(.semibold))
+                                                .foregroundStyle(SafeRiderTheme.orange)
+
+                                                HStack {
+                                                    Text("Frequency")
+                                                    Spacer()
+                                                    Text(arrangement.paymentFrequency.rawValue)
+                                                        .fontWeight(.medium)
+                                                }
+
+                                                HStack {
+                                                    Text("Amount")
+                                                    Spacer()
+                                                    Text(
+                                                        arrangement.amount,
+                                                        format: .currency(code: "AED")
+                                                    )
+                                                    .fontWeight(.medium)
+                                                }
+
+                                                HStack {
+                                                    Text("Next Due")
+                                                    Spacer()
+                                                    Text(arrangement.nextDueDate, style: .date)
+                                                        .fontWeight(.medium)
+                                                }
+
+                                                HStack {
+                                                    Text("Status")
+                                                    Spacer()
+
+                                                    Text(arrangement.isActive ? "Active" : "Inactive")
+                                                        .fontWeight(.semibold)
+                                                        .foregroundStyle(
+                                                            arrangement.isActive
+                                                                ? .green
+                                                                : SafeRiderTheme.secondaryText
+                                                        )
+                                                }
+                                            }
+                                            .font(.caption)
+                                            .foregroundStyle(SafeRiderTheme.secondaryText)
+                                            .padding(.top, 4)
+
+                                        } else {
+                                            Label(
+                                                "No payment arrangement configured",
+                                                systemImage: "info.circle"
+                                            )
+                                            .font(.caption)
+                                            .foregroundStyle(SafeRiderTheme.secondaryText)
+                                        }
+
                                     }
                                     .padding(.vertical, 6)
                                 }

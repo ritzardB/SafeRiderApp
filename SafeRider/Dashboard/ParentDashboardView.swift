@@ -30,7 +30,7 @@ struct ParentDashboardView: View {
 
             NavigationStack {
                 parentHomeView
-                    .navigationTitle("My Dashboard")
+                    .navigationTitle("Parent's Dashboard")
             }
             .tabItem {
                 Label(
@@ -885,12 +885,70 @@ struct ParentDashboardView: View {
     @ViewBuilder
     private var parentPaymentsView: some View {
 
-        if let parent =
-            dataManager.currentParent {
+        if let parent = dataManager.currentParent {
 
-            PaymentsView(
-                parentOnly: parent.id
-            )
+            VStack(spacing: 0) {
+
+                // MARK: Payment Arrangement Navigation
+
+                NavigationLink {
+
+                    PaymentArrangementView()
+                        .environmentObject(dataManager)
+
+                } label: {
+
+                    HStack(spacing: 12) {
+
+                        Image(systemName: "calendar.badge.clock")
+                            .font(.title2)
+                            .foregroundStyle(SafeRiderTheme.orange)
+
+                        VStack(
+                            alignment: .leading,
+                            spacing: 4
+                        ) {
+
+                            Text("Payment Arrangement")
+                                .font(.headline)
+                                .foregroundStyle(
+                                    SafeRiderTheme.primaryText
+                                )
+
+                            Text(
+                                "Configure your child's payment frequency, "
+                                + "amount, and due date."
+                            )
+                            .font(.caption)
+                            .foregroundStyle(
+                                SafeRiderTheme.secondaryText
+                            )
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(
+                                SafeRiderTheme.secondaryText
+                            )
+                    }
+                    .padding()
+                    .background(SafeRiderTheme.surface)
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 14)
+                    )
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(.plain)
+
+                // MARK: Existing Payment Transactions
+
+                PaymentsView(
+                    parentOnly: parent.id
+                )
+            }
 
         } else {
 
