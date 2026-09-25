@@ -211,7 +211,6 @@ struct ParentProfileView: View {
             .background(Color.clear)
         }
         .navigationTitle("My Profile")
-        .navigationBarTitleDisplayMode(.inline)
         .task(id: selectedPhoto) {
             await loadSelectedPhoto()
         }
