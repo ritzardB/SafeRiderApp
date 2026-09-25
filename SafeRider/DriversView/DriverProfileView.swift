@@ -67,9 +67,7 @@ struct DriverProfileView: View {
                                         .scaledToFill()
                                 } else {
                                     ProfileAvatarView(
-                                        name: name.isEmpty
-                                            ? "Driver"
-                                            : name,
+                                        name: name.isEmpty ? "Driver" : name,
                                         photoURL: driver.photoURL,
                                         size: 120
                                     )
@@ -79,10 +77,7 @@ struct DriverProfileView: View {
                             .clipShape(Circle())
                             .overlay {
                                 Circle()
-                                    .stroke(
-                                        .white,
-                                        lineWidth: 4
-                                    )
+                                    .stroke(.white, lineWidth: 4)
                             }
                             .shadow(
                                 color: .black.opacity(0.15),
@@ -90,7 +85,7 @@ struct DriverProfileView: View {
                                 y: 3
                             )
 
-                            // Camera button
+                            // Camera Button
                             PhotosPicker(
                                 selection: $selectedPhoto,
                                 matching: .images,
@@ -98,56 +93,64 @@ struct DriverProfileView: View {
                             ) {
                                 ZStack {
                                     Circle()
-                                        .fill(
-                                            .black.opacity(0.75)
-                                        )
-                                        .frame(
-                                            width: 42,
-                                            height: 42
-                                        )
+                                        .fill(.black.opacity(0.75))
+                                        .frame(width: 42, height: 42)
 
-                                    Image(
-                                        systemName: "camera.fill"
-                                    )
-                                    .font(
-                                        .system(
-                                            size: 18,
-                                            weight: .semibold
+                                    Image(systemName: "camera.fill")
+                                        .font(
+                                            .system(
+                                                size: 18,
+                                                weight: .semibold
+                                            )
                                         )
-                                    )
-                                    .foregroundStyle(.white)
+                                        .foregroundStyle(.white)
                                 }
                                 .overlay {
                                     Circle()
-                                        .stroke(
-                                            .white,
-                                            lineWidth: 2
-                                        )
+                                        .stroke(.white, lineWidth: 2)
                                 }
                             }
                             .offset(y: 6)
                             .disabled(isUploadingPhoto)
                         }
 
+                        // Upload Status
                         if isUploadingPhoto {
-                            ProgressView(
-                                "Uploading photo..."
-                            )
-                            .font(.caption)
-                            .padding(.top, 8)
+                            ProgressView("Uploading photo...")
+                                .font(.caption)
+                                .tint(.white)
+                                .padding(.top, 8)
                         } else {
-                            Text(
-                                "Tap the camera icon to change your photo"
-                            )
-                            .font(.caption)
-                            .foregroundStyle(
-                                SafeRiderTheme.secondaryText
-                            )
-                            .padding(.top, 8)
+                            Text("Tap the camera icon to change your photo")
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.9))
+                                .padding(.top, 8)
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 20)
+                    .background {
+                        // Orange Gradient Background
+                        LinearGradient(
+                            colors: [
+                                SafeRiderTheme.orange,
+                                SafeRiderTheme.orange.opacity(0.75),
+                                Color(red: 0.95, green: 0.45, blue: 0.20)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .listRowInsets(
+                        EdgeInsets(
+                            top: 8,
+                            leading: 16,
+                            bottom: 8,
+                            trailing: 16
+                        )
+                    )
+                    .listRowBackground(Color.clear)
                 }
 
                 // MARK: - Driver Information
@@ -328,7 +331,7 @@ struct DriverProfileView: View {
             .scrollContentBackground(.hidden)
             .background(Color.clear)
         }
-        .navigationTitle("Driver Profile")
+        .navigationTitle("Driver's Profile")
         .toolbar {
             ToolbarItem(
                 placement: .confirmationAction

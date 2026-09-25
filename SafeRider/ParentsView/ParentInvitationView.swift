@@ -54,7 +54,7 @@ struct ParentDriverInvitationView: View {
                 .padding()
             }
         }
-        .navigationTitle("Invitation")
+        .navigationTitle("Driver's Invitation")
         .toolbar {
             ToolbarItem(
                 placement: .topBarTrailing
@@ -100,7 +100,7 @@ struct ParentDriverInvitationView: View {
                 SafeRiderTheme.blue
             )
 
-            Text("Invite a Driver")
+            Text("Invite a Driver to connect")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundStyle(

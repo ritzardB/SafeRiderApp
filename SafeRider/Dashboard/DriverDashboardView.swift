@@ -20,7 +20,7 @@ struct DriverDashboardView: View {
 
             NavigationStack {
                 driverHomeView
-                    .navigationTitle("My Dashboard")
+                    .navigationTitle("Driver's Dashboard")
             }
             .tabItem {
                 Label("Home", systemImage: "house.fill")

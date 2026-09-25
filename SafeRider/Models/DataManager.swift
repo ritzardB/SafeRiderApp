@@ -39,6 +39,7 @@ final class DataManager: ObservableObject {
     private var listeners: [ListenerRegistration] = []
     private var arrangementListeners: [ListenerRegistration] = []
     private var driverScheduleCache: [TransportationSchedule] = []
+    private var driverRideStatusCache: [String: RideStatus] = [:]
     
     
     private var currentUID: String?
@@ -604,18 +605,109 @@ final class DataManager: ObservableObject {
             }
             
             // Rides
-            addQueryListener(
-                db.collection("rides")
-                    .whereField(
-                        "driverAuthUID",
-                        isEqualTo: uid
+            let driverRideQuery = db.collection("rides")
+                .whereField(
+                    "driverAuthUID",
+                    isEqualTo: uid
+                )
+
+            let driverRideListener = driverRideQuery.addSnapshotListener {
+                [weak self] snapshot, error in
+
+                guard let self else {
+                    return
+                }
+
+                if let error {
+                    print(
+                        "🔴 SafeRider: Driver ride listener error =",
+                        error.localizedDescription
                     )
-            ) { documents in
-                
-                self.rides = documents.compactMap {
+                    self.errorMessage = error.localizedDescription
+                    return
+                }
+
+                guard let snapshot else {
+                    return
+                }
+
+                let notificationManager = DriverNotificationManager()
+
+                for change in snapshot.documentChanges {
+
+                    let documentID = change.document.documentID
+
+                    guard let ride = self.ride(from: change.document.data()) else {
+                        continue
+                    }
+
+                    switch change.type {
+
+                    case .added:
+                        // Store the initial status without notifying.
+                        // This prevents notifications when Firestore first loads.
+                        self.driverRideStatusCache[documentID] = ride.status
+
+                    case .modified:
+                        let previousStatus =
+                            self.driverRideStatusCache[documentID]
+
+                        self.driverRideStatusCache[documentID] = ride.status
+
+                        // Only notify when the ride status actually changed.
+                        guard previousStatus != ride.status else {
+                            continue
+                        }
+
+                        print(
+                            "🔔 SafeRider: Ride status changed:",
+                            documentID,
+                            previousStatus?.rawValue ?? "unknown",
+                            "→",
+                            ride.status.rawValue
+                        )
+
+                        let notificationsEnabled =
+                            UserDefaults.standard.object(
+                                forKey: "driverRideNotifications"
+                            ) as? Bool ?? false
+
+                        guard notificationsEnabled else {
+                            print(
+                                "🔕 SafeRider: Driver ride notifications disabled"
+                            )
+                            continue
+                        }
+
+                        guard notificationManager.isAuthorized else {
+                            print(
+                                "🔕 SafeRider: Driver notifications not authorized"
+                            )
+                            continue
+                        }
+
+                        notificationManager.sendRideNotification(
+                            title: "Ride Update",
+                            body: "Your assigned ride status changed to \(ride.status.rawValue).",
+                            rideID: documentID
+                        )
+
+                    case .removed:
+                        self.driverRideStatusCache.removeValue(
+                            forKey: documentID
+                        )
+                    @unknown default:
+                        break
+                    }
+                }
+
+                // Keep the driver's rides array synchronized.
+                self.rides = snapshot.documents.compactMap {
                     self.ride(from: $0.data())
                 }
             }
+
+            self.listeners.append(driverRideListener)
             
             // Transportation schedules for assigned students
             addQueryListener(
@@ -690,9 +782,42 @@ final class DataManager: ObservableObject {
     }
     
     private func applyDriverScheduleFilter() {
+
         let assignedIDs = Set(
             students.map(\.id)
         )
+
+        print("🔎 SafeRider: Applying driver schedule filter")
+        print("👨‍👩‍👧 Assigned students:", students.count)
+        print("🆔 Assigned student IDs:", assignedIDs)
+        print(
+            "📅 Driver schedule cache:",
+            driverScheduleCache.count
+        )
+
+        for student in students {
+            print(
+                "👤 Student:",
+                student.name,
+                "ID:",
+                student.id.uuidString
+            )
+        }
+
+        for schedule in driverScheduleCache {
+            print(
+                """
+                📋 Schedule:
+                ID: \(schedule.id.uuidString)
+                Student ID: \(schedule.studentId.uuidString)
+                Driver ID: \(schedule.driverId.uuidString)
+                Active: \(schedule.isActive)
+                Weekdays: \(schedule.weekdays)
+                Morning: \(String(describing: schedule.morningPickupTime))
+                Afternoon: \(String(describing: schedule.afternoonPickupTime))
+                """
+            )
+        }
 
         transportationSchedules =
             driverScheduleCache.filter {
@@ -700,6 +825,18 @@ final class DataManager: ObservableObject {
                     $0.studentId
                 )
             }
+
+        print(
+            "✅ Filtered driver schedules:",
+            transportationSchedules.count
+        )
+
+        for schedule in transportationSchedules {
+            print(
+                "🎯 Matched schedule for student:",
+                schedule.studentId.uuidString
+            )
+        }
     }
     
     private func addCollectionListener(

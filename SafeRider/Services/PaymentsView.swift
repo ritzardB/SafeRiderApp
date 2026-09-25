@@ -37,7 +37,8 @@ struct PaymentsView: View {
 
     var body: some View {
         ZStack {
-            backgroundView
+            SafeRiderTheme.orangeTint
+                .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 summaryView
@@ -45,10 +46,18 @@ struct PaymentsView: View {
                 paymentHistoryView
             }
         }
-        .navigationTitle("Payments")
+        .navigationTitle("Payments Dashboard")
         .toolbar {
             addPaymentButton
         }
+        .toolbarBackground(
+            SafeRiderTheme.orangeTint,
+            for: .navigationBar
+        )
+        .toolbarBackground(
+            .visible,
+            for: .navigationBar
+        )
         .sheet(
             isPresented: $showingAddPayment
         ) {
@@ -65,7 +74,8 @@ struct PaymentsView: View {
             deleteAlertMessage
         }
     }
-
+    
+    
     // MARK: - Background
 
     private var backgroundView: some View {
@@ -138,7 +148,7 @@ struct PaymentsView: View {
         .foregroundStyle(
             SafeRiderTheme.secondaryText
         )
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 12)
         .padding(.vertical, 12)
         .background(
             SafeRiderTheme.orangeTint
@@ -150,6 +160,7 @@ struct PaymentsView: View {
     @ViewBuilder
     private var paymentHistoryView: some View {
         if displayedPayments.isEmpty {
+
             ContentUnavailableView(
                 "No Payments",
                 systemImage: "creditcard",
@@ -157,7 +168,16 @@ struct PaymentsView: View {
                     "Your payment history will appear here."
                 )
             )
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: .infinity
+            )
+            .background(
+                SafeRiderTheme.orangeTint
+            )
+
         } else {
+
             List {
                 ForEach(displayedPayments) { payment in
                     paymentListRow(payment)
@@ -165,9 +185,11 @@ struct PaymentsView: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
+            .background(
+                SafeRiderTheme.orangeTint
+            )
         }
     }
-
     // MARK: - Payment Row
 
     private func paymentListRow(
@@ -212,7 +234,7 @@ struct PaymentsView: View {
             Text(
                 formattedDate(payment.date)
             )
-            .font(.caption)
+            .font(.caption2)
             .foregroundStyle(
                 SafeRiderTheme.secondaryText
             )
@@ -224,7 +246,7 @@ struct PaymentsView: View {
             Text(
                 student?.name ?? "Unknown"
             )
-            .font(.subheadline)
+            .font(.caption)
             .fontWeight(.medium)
             .foregroundStyle(
                 SafeRiderTheme.primaryText
@@ -238,7 +260,7 @@ struct PaymentsView: View {
             Text(
                 formattedAmount(payment.amount)
             )
-            .font(.subheadline)
+            .font(.caption)
             .fontWeight(.semibold)
             .foregroundStyle(
                 SafeRiderTheme.success
@@ -249,7 +271,7 @@ struct PaymentsView: View {
             )
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
 
